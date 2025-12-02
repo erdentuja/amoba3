@@ -618,12 +618,13 @@ class GomokuAI {
 }
 
 class GameRoom {
-  constructor(roomId, boardSize = 15, creatorId = null, creatorName = null, gameMode = 'pvp') {
+  constructor(roomId, boardSize = 15, creatorId = null, creatorName = null, gameMode = 'pvp', io = null) {
     this.roomId = roomId;
     this.boardSize = boardSize;
     this.creatorId = creatorId;
     this.creatorName = creatorName;
     this.gameMode = gameMode;  // 'pvp', 'ai-easy', 'ai-medium', 'ai-hard'
+    this.io = io; // Store io instance for timer callbacks
     this.players = [];
     this.spectators = []; // {id, name}
     this.status = 'waiting'; // 'waiting' or 'in_progress'
@@ -692,7 +693,7 @@ class GameRoom {
       if (this.players.length === 2) {
         this.status = 'in_progress';
         // Start timer when game starts
-        this.startTimer(() => this.handleTimerExpiry(io));
+        this.startTimer(() => this.handleTimerExpiry());
       }
 
       return true;
@@ -785,7 +786,7 @@ class GameRoom {
     this.currentPlayer = 1 - this.currentPlayer;
 
     // Restart timer for next player
-    this.startTimer(() => this.handleTimerExpiry(io));
+    this.startTimer(() => this.handleTimerExpiry());
 
     return { success: true, gameOver: false };
   }
@@ -899,7 +900,7 @@ class GameRoom {
     }
   }
 
-  handleTimerExpiry(io) {
+  handleTimerExpiry() {
     console.log(`🔔 handleTimerExpiry called! Room: ${this.roomId}, gameOver: ${this.gameOver}, currentPlayer before: ${this.currentPlayer}`);
 
     if (this.gameOver) {
@@ -913,12 +914,12 @@ class GameRoom {
     console.log(`🔄 Player switched from ${oldPlayer} to ${this.currentPlayer}`);
 
     // Broadcast update with new current player
-    io.to(this.roomId).emit('gameState', this.getState());
-    io.to(this.roomId).emit('message', '⏰ Lejárt az idő! Kör átugrva.');
+    this.io.to(this.roomId).emit('gameState', this.getState());
+    this.io.to(this.roomId).emit('message', '⏰ Lejárt az idő! Kör átugrva.');
     console.log(`📤 Broadcasted gameState and message to room ${this.roomId}`);
 
     // Restart timer for the next player
-    this.startTimer(() => this.handleTimerExpiry(io));
+    this.startTimer(() => this.handleTimerExpiry());
 
     // IMPORTANT: If it's an AI game and now it's AI's turn, trigger AI move
     if (this.isAIGame && !this.gameOver) {
@@ -928,11 +929,11 @@ class GameRoom {
         setTimeout(() => {
           const aiResult = this.makeAIMove();
           if (aiResult && aiResult.success) {
-            io.to(this.roomId).emit('gameState', this.getState());
+            this.io.to(this.roomId).emit('gameState', this.getState());
             console.log(`🤖 AI move completed after timer expiry`);
 
             if (aiResult.gameOver) {
-              io.to(this.roomId).emit('message', `${aiResult.winner ? aiResult.winner.name + ' wins!' : "It's a draw!"}`);
+              this.io.to(this.roomId).emit('message', `${aiResult.winner ? aiResult.winner.name + ' wins!' : "It's a draw!"}`);
             }
           }
         }, 500);
@@ -1277,7 +1278,7 @@ io.on('connection', (socket) => {
     }
 
     const mode = gameMode || 'pvp';
-    const newRoom = new GameRoom(roomId, size, socket.id, client.name, mode);
+    const newRoom = new GameRoom(roomId, size, socket.id, client.name, mode, io);
     rooms.set(roomId, newRoom);
 
     // Track statistics
