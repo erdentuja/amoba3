@@ -893,9 +893,12 @@ class GameRoom {
   handleTimerExpiry(io) {
     if (this.gameOver) return;
 
-    // Broadcast update
+    // Switch to next player (skip turn)
+    this.currentPlayer = (this.currentPlayer + 1) % 2;
+
+    // Broadcast update with new current player
     io.to(this.roomId).emit('gameState', this.getState());
-    io.to(this.roomId).emit('message', '⏰ Lejárt az idő! Következő játékos jön.');
+    io.to(this.roomId).emit('message', '⏰ Lejárt az idő! Kör átugrva.');
 
     // Restart timer for the next player
     this.startTimer(() => this.handleTimerExpiry(io));
