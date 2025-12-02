@@ -320,13 +320,8 @@ function initSocketConnection() {
         }
       }
 
-      // Auto-login as admin if session exists (Legacy support, new system uses login event)
-      const savedAdminCode = localStorage.getItem('adminCode');
-      const isAdminSession = localStorage.getItem('isAdminSession');
-      if (savedAdminCode && isAdminSession === 'true' && !isAdmin) {
-        console.log('🔄 Auto-logging in as admin (legacy)...');
-        socket.emit('adminLogin', { adminCode: savedAdminCode });
-      }
+      // Admin status is now managed server-side only (security improvement)
+      // No client-side admin code storage
 
       console.log('Logged in as:', playerName, isAdmin ? '(ADMIN)' : '');
     });
@@ -1751,8 +1746,9 @@ window.addEventListener('click', (e) => {
 adminSubmitBtn.addEventListener('click', () => {
   const code = adminCodeInput.value.trim();
   if (code && socket) {
-    localStorage.setItem('adminCode', code);
+    // Security: Do not store admin code in localStorage
     socket.emit('adminLogin', { adminCode: code });
+    adminCodeInput.value = ''; // Clear input after submit
   }
 });
 
@@ -1865,7 +1861,6 @@ function setupAdminListeners() {
     showModalMessage(message, 'warning');
     // Clear session to prevent auto-relogin
     localStorage.removeItem('playerName');
-    localStorage.removeItem('adminCode');
     localStorage.removeItem('isAdminSession');
 
     setTimeout(() => {

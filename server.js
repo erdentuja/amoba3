@@ -4,9 +4,79 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const path = require('path');
 const fs = require('fs').promises;
+const bcrypt = require('bcrypt');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const sanitizeHtml = require('sanitize-html');
 
 const PORT = process.env.PORT || 9000;
 const ADMIN_CODE = process.env.ADMIN_CODE || 'admin123'; // Change this in production!
+const BCRYPT_ROUNDS = 10; // Salt rounds for bcrypt
+
+// Sanitization configuration
+const sanitizeConfig = {
+  allowedTags: [], // No HTML tags allowed
+  allowedAttributes: {}, // No attributes allowed
+  textFilter: (text) => text // Keep text as-is after stripping tags
+};
+
+// Utility function to sanitize user input
+function sanitizeInput(input, maxLength = 200) {
+  if (!input || typeof input !== 'string') return '';
+
+  // Remove HTML tags and dangerous content
+  const sanitized = sanitizeHtml(input, sanitizeConfig);
+
+  // Trim whitespace
+  const trimmed = sanitized.trim();
+
+  // Limit length
+  return trimmed.substring(0, maxLength);
+}
+
+// Rate limiting for Socket.IO events
+const socketRateLimits = new Map(); // socketId -> { eventName -> [timestamps] }
+
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const RATE_LIMITS = {
+  'chatMessage': 20,      // 20 messages per minute
+  'lobbyChatMessage': 20, // 20 messages per minute
+  'makeMove': 60,         // 60 moves per minute (1 per second)
+  'undoMove': 10,         // 10 undo requests per minute
+  'emojiReaction': 30,    // 30 emojis per minute
+  'default': 100          // 100 requests per minute for other events
+};
+
+function checkRateLimit(socketId, eventName) {
+  if (!socketRateLimits.has(socketId)) {
+    socketRateLimits.set(socketId, new Map());
+  }
+
+  const socketLimits = socketRateLimits.get(socketId);
+  const now = Date.now();
+  const limit = RATE_LIMITS[eventName] || RATE_LIMITS.default;
+
+  // Get timestamps for this event
+  let timestamps = socketLimits.get(eventName) || [];
+
+  // Remove timestamps outside the window
+  timestamps = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW);
+
+  // Check if limit exceeded
+  if (timestamps.length >= limit) {
+    return false; // Rate limit exceeded
+  }
+
+  // Add current timestamp
+  timestamps.push(now);
+  socketLimits.set(eventName, timestamps);
+
+  return true; // Within rate limit
+}
+
+function cleanupRateLimit(socketId) {
+  socketRateLimits.delete(socketId);
+}
 
 // Data file paths
 const STATS_FILE = path.join(__dirname, 'data', 'stats.json');
@@ -67,8 +137,11 @@ const UserManager = {
   },
 
   async createUser(username, password) {
+    // Hash password if provided
+    const hashedPassword = password ? await bcrypt.hash(password, BCRYPT_ROUNDS) : null;
+
     this.users[username] = {
-      password: password || null, // Optional password
+      password: hashedPassword,
       isAdmin: false,
       rank: 'Újonc',
       score: 0,
@@ -80,11 +153,54 @@ const UserManager = {
 
   async setPassword(username, password) {
     if (this.users[username]) {
-      this.users[username].password = password;
+      // Hash password before storing
+      this.users[username].password = await bcrypt.hash(password, BCRYPT_ROUNDS);
       await this.save();
       return true;
     }
     return false;
+  },
+
+  async verifyPassword(username, password) {
+    const user = this.users[username];
+    if (!user || !user.password) {
+      return false;
+    }
+
+    // Check if password is already hashed (starts with $2b$ for bcrypt)
+    if (!user.password.startsWith('$2b$')) {
+      // Legacy plain text password - compare directly and then migrate
+      if (user.password === password) {
+        console.log(`⚠️ Migrating plain text password for user: ${username}`);
+        await this.setPassword(username, password);
+        return true;
+      }
+      return false;
+    }
+
+    // Compare hashed password
+    return await bcrypt.compare(password, user.password);
+  },
+
+  async migrateAllPasswords() {
+    console.log('🔄 Starting password migration...');
+    let migrated = 0;
+
+    for (const [username, user] of Object.entries(this.users)) {
+      if (user.password && !user.password.startsWith('$2b$')) {
+        console.log(`🔐 Migrating password for: ${username}`);
+        const plainPassword = user.password;
+        user.password = await bcrypt.hash(plainPassword, BCRYPT_ROUNDS);
+        migrated++;
+      }
+    }
+
+    if (migrated > 0) {
+      await this.save();
+      console.log(`✅ Migrated ${migrated} passwords to bcrypt`);
+    } else {
+      console.log('✅ All passwords already hashed');
+    }
   },
 
   async updateScore(username, points) {
@@ -153,7 +269,10 @@ const UserManager = {
 };
 
 // Initialize UserManager
-UserManager.init();
+(async () => {
+  await UserManager.init();
+  await UserManager.migrateAllPasswords();
+})();
 
 // Global timer settings (admin configurable)
 let globalTimerSettings = {
@@ -205,6 +324,25 @@ let lobbyChatHistory = [];
 // Track connected clients
 const connectedClients = new Map(); // socketId -> {name, isAdmin, connectedAt, createdRoom}
 const loggedInPlayers = new Map(); // socketId -> {name, loggedInAt}
+
+// Security headers with helmet
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "ws:", "wss:"], // Allow WebSocket connections
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"]
+    }
+  },
+  crossOriginEmbedderPolicy: false, // Allow embedding for better compatibility
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // Serve static files
 app.use(express.static('public'));
@@ -969,15 +1107,13 @@ io.on('connection', (socket) => {
 
   // Player login (just registers the player)
   socket.on('login', async ({ playerName, password }) => {
-    // FIX #10: Validate empty name after trim
-    const trimmedName = (playerName || '').trim();
+    // Sanitize and validate username (max 50 chars for usernames)
+    const name = sanitizeInput(playerName, 50);
 
-    if (!trimmedName) {
-      socket.emit('error', 'Kérlek adj meg egy nevet!');
+    if (!name) {
+      socket.emit('error', 'Kérlek adj meg egy érvényes nevet!');
       return;
     }
-
-    const name = trimmedName; // Use the trimmed name directly
 
     // Check if name is already taken by another active connection
     let nameTaken = false;
@@ -999,8 +1135,13 @@ io.on('connection', (socket) => {
     if (user) {
       // User exists
       if (user.password) {
-        // Password required
-        if (password !== user.password) {
+        // Password required - use bcrypt verification
+        if (!password) {
+          socket.emit('loginFailed', { error: 'Ehhez a névhez jelszó szükséges!' });
+          return;
+        }
+        const passwordValid = await UserManager.verifyPassword(name, password);
+        if (!passwordValid) {
           socket.emit('loginFailed', { error: 'Helytelen jelszó! Ehhez a névhez jelszó tartozik.' });
           return;
         }
@@ -1497,6 +1638,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('makeMove', ({ row, col }) => {
+    // Rate limiting check
+    if (!checkRateLimit(socket.id, 'makeMove')) {
+      socket.emit('error', 'Túl gyorsan próbálsz lépni! Várj egy kicsit.');
+      return;
+    }
+
     if (!socket.roomId) return;
 
     const room = rooms.get(socket.roomId);
@@ -1607,6 +1754,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chatMessage', ({ message }) => {
+    // Rate limiting check
+    if (!checkRateLimit(socket.id, 'chatMessage')) {
+      socket.emit('error', 'Túl gyorsan küldesz üzeneteket! Várj egy kicsit.');
+      return;
+    }
+
     if (!socket.roomId) return;
 
     const room = rooms.get(socket.roomId);
@@ -1615,36 +1768,38 @@ io.on('connection', (socket) => {
     const client = connectedClients.get(socket.id);
     if (!client) return;
 
-    // Validate message
-    if (!message || typeof message !== 'string') return;
-
-    const trimmedMessage = message.trim();
-    if (trimmedMessage.length === 0 || trimmedMessage.length > 200) return;
+    // Sanitize and validate message (XSS protection)
+    const sanitizedMessage = sanitizeInput(message, 200);
+    if (!sanitizedMessage) return;
 
     // Broadcast message to everyone in the room
     io.to(socket.roomId).emit('chatMessage', {
       senderId: socket.id,
       senderName: client.name,
-      message: trimmedMessage,
+      message: sanitizedMessage,
       timestamp: Date.now()
     });
   });
 
   socket.on('lobbyChatMessage', ({ message }) => {
+    // Rate limiting check
+    if (!checkRateLimit(socket.id, 'lobbyChatMessage')) {
+      socket.emit('error', 'Túl gyorsan küldesz üzeneteket! Várj egy kicsit.');
+      return;
+    }
+
     const client = connectedClients.get(socket.id);
     if (!client) return;
 
-    // Validate message
-    if (!message || typeof message !== 'string') return;
-
-    const trimmedMessage = message.trim();
-    if (trimmedMessage.length === 0 || trimmedMessage.length > 200) return;
+    // Sanitize and validate message (XSS protection)
+    const sanitizedMessage = sanitizeInput(message, 200);
+    if (!sanitizedMessage) return;
 
     // Create message object
     const chatMessage = {
       senderId: socket.id,
       senderName: client.name,
-      message: trimmedMessage,
+      message: sanitizedMessage,
       timestamp: Date.now()
     };
 
@@ -1660,6 +1815,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('undoMove', () => {
+    // Rate limiting check
+    if (!checkRateLimit(socket.id, 'undoMove')) {
+      socket.emit('error', 'Túl gyakran próbálsz visszavonni! Várj egy kicsit.');
+      return;
+    }
+
     if (!socket.roomId) return;
 
     const room = rooms.get(socket.roomId);
@@ -2028,6 +2189,9 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+
+    // Cleanup rate limiting data
+    cleanupRateLimit(socket.id);
 
     const client = connectedClients.get(socket.id);
 
