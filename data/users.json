@@ -7,7 +7,7 @@
     "createdAt": "2025-12-01T22:28:13.994Z"
   },
   "András": {
-    "password": "$2b$10$CHchFgEIw50bqQLznqUnZODipxOpJ0h0B33cplkz/x9Ku0g8rmc4u",
+    "password": "a123",
     "isAdmin": true,
     "rank": "Főadmin",
     "score": 30
