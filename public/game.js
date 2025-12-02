@@ -1769,12 +1769,11 @@ adminCodeInput.addEventListener('keypress', (e) => {
 });
 
 adminLogoutBtn.addEventListener('click', () => {
-  isAdmin = false;
-  localStorage.removeItem('isAdminSession');
+  // DON'T set isAdmin = false! User is still logged in as admin
+  // Just return to lobby while keeping admin privileges
   adminPanel.style.display = 'none';
   adminLoginBtn.style.display = 'block';
   lobby.style.display = 'flex';
-  // location.reload(); // Removed to prevent flashing login screen
 });
 
 // Auto-save timer settings when toggle changes
