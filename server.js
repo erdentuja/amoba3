@@ -919,6 +919,13 @@ handleTimerExpiry(io) {
   startTimer(callback) {
     this.clearTimer();
 
+    console.log(`🔍 startTimer called: io=${!!this.io}, enabled=${globalTimerSettings.enabled}, players=${this.players.length}, gameOver=${this.gameOver}`);
+
+    if (!this.io) {
+      console.log('❌ CRITICAL: this.io is NULL or undefined! Timer cannot start!');
+      return;
+    }
+
     if (globalTimerSettings.enabled && this.players.length === 2 && !this.gameOver) {
       this.timerEndTime = Date.now() + (globalTimerSettings.duration * 1000);
 
