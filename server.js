@@ -883,8 +883,8 @@ class GameRoom {
       this.timerEndTime = Date.now() + (globalTimerSettings.duration * 1000);
 
       this.timer = setTimeout(() => {
-        // Time's up! Skip turn
-        this.currentPlayer = 1 - this.currentPlayer;
+        // Time's up! Call the callback to handle turn skip
+        // DON'T switch player here - let handleTimerExpiry do it
         if (callback) callback();
       }, globalTimerSettings.duration * 1000);
     }
