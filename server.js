@@ -2226,6 +2226,52 @@ io.on('connection', (socket) => {
     socket.emit('message', 'Statisztikák törölve!');
   });
 
+  // Admin change password
+  socket.on('adminChangePassword', async ({ currentPassword, newPassword }) => {
+    const client = connectedClients.get(socket.id);
+    if (!client || !client.isAdmin) {
+      socket.emit('error', 'Unauthorized');
+      return;
+    }
+
+    try {
+      // Sanitize inputs
+      const sanitizedCurrent = sanitizeInput(currentPassword, 100);
+      const sanitizedNew = sanitizeInput(newPassword, 100);
+
+      if (!sanitizedCurrent || !sanitizedNew) {
+        socket.emit('error', 'Érvénytelen jelszó!');
+        return;
+      }
+
+      if (sanitizedNew.length < 4) {
+        socket.emit('error', 'Az új jelszónak legalább 4 karakter hosszúnak kell lennie!');
+        return;
+      }
+
+      // Get admin username (the logged in admin user)
+      const adminUsername = client.name;
+
+      // Verify current password
+      const isValid = await UserManager.verifyPassword(adminUsername, sanitizedCurrent);
+      if (!isValid) {
+        console.log(`🔒 Failed password change attempt for: ${adminUsername}`);
+        socket.emit('error', 'Hibás jelenlegi jelszó!');
+        return;
+      }
+
+      // Set new password (will be hashed by UserManager)
+      await UserManager.setPassword(adminUsername, sanitizedNew);
+
+      console.log(`🔑 Password changed successfully for admin: ${adminUsername}`);
+      socket.emit('message', '✅ Jelszó sikeresen megváltoztatva!');
+
+    } catch (error) {
+      console.error('Error changing password:', error);
+      socket.emit('error', 'Hiba történt a jelszó módosítása során!');
+    }
+  });
+
   // Handle stats request (for public statistics view)
   socket.on('requestStats', () => {
     socket.emit('gameStats', gameStats);

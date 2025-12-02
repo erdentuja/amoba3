@@ -230,6 +230,24 @@
             törlése</button>
         </div>
         <div class="admin-section">
+          <h3>🔑 Admin Jelszó Módosítás</h3>
+          <div class="password-change-form" style="margin-top: 15px;">
+            <div class="form-group">
+              <label for="adminCurrentPassword">Jelenlegi jelszó:</label>
+              <input type="password" id="adminCurrentPassword" class="form-control" placeholder="Jelenlegi jelszó">
+            </div>
+            <div class="form-group" style="margin-top: 10px;">
+              <label for="adminNewPassword">Új jelszó:</label>
+              <input type="password" id="adminNewPassword" class="form-control" placeholder="Új jelszó">
+            </div>
+            <div class="form-group" style="margin-top: 10px;">
+              <label for="adminConfirmPassword">Új jelszó megerősítése:</label>
+              <input type="password" id="adminConfirmPassword" class="form-control" placeholder="Új jelszó megerősítése">
+            </div>
+            <button id="changePasswordBtn" class="btn btn-primary" style="margin-top: 15px;">🔒 Jelszó Módosítás</button>
+          </div>
+        </div>
+        <div class="admin-section">
           <h3>👥 Regisztrált Felhasználók</h3>
           <div id="registeredUsersList" class="admin-list"></div>
         </div>

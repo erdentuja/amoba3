@@ -1829,6 +1829,58 @@ if (clearStatsBtn) {
   });
 }
 
+// Change password button handler
+const changePasswordBtn = document.getElementById('changePasswordBtn');
+if (changePasswordBtn) {
+  changePasswordBtn.addEventListener('click', () => {
+    const currentPassword = document.getElementById('adminCurrentPassword').value.trim();
+    const newPassword = document.getElementById('adminNewPassword').value.trim();
+    const confirmPassword = document.getElementById('adminConfirmPassword').value.trim();
+
+    // Validation
+    if (!currentPassword) {
+      sounds.error();
+      alert('Kérlek add meg a jelenlegi jelszót!');
+      return;
+    }
+
+    if (!newPassword) {
+      sounds.error();
+      alert('Kérlek add meg az új jelszót!');
+      return;
+    }
+
+    if (newPassword.length < 4) {
+      sounds.error();
+      alert('Az új jelszónak legalább 4 karakter hosszúnak kell lennie!');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      sounds.error();
+      alert('Az új jelszó és a megerősítés nem egyezik!');
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      sounds.error();
+      alert('Az új jelszó nem lehet ugyanaz, mint a jelenlegi!');
+      return;
+    }
+
+    // Send password change request to server
+    socket.emit('adminChangePassword', {
+      currentPassword: currentPassword,
+      newPassword: newPassword
+    });
+
+    // Clear inputs
+    document.getElementById('adminCurrentPassword').value = '';
+    document.getElementById('adminNewPassword').value = '';
+    document.getElementById('adminConfirmPassword').value = '';
+  });
+}
+
 
 
 // Handle admin login response
