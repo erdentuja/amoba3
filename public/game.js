@@ -1728,7 +1728,7 @@ const clearStatsBtn = document.getElementById('clearStatsBtn');
 // Admin modal controls
 adminLoginBtn.addEventListener('click', () => {
   if (isAdmin) {
-    // If already admin, skip login modal
+    // Admin user - direct access to admin panel
     adminPanel.style.display = 'block';
     adminLoginBtn.style.display = 'none';
     lobby.style.display = 'none';
@@ -1737,8 +1737,9 @@ adminLoginBtn.addEventListener('click', () => {
     socket.emit('adminGetTimerSettings');
     socket.emit('adminGetOnlinePlayers');
   } else {
-    adminModal.style.display = 'block';
-    adminCodeInput.focus();
+    // Not an admin user - show error
+    sounds.error();
+    alert('⛔ Nincs jogosultságod az admin panelhez! Csak admin felhasználók férhetnek hozzá.');
   }
 });
 
