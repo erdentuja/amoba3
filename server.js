@@ -751,55 +751,12 @@ class GameRoom {
     if (this.board[row][col] !== null) return { success: false, error: 'Cell already occupied' };
 
     const symbol = this.players[this.currentPlayer].symbol;
-const express = require('express');
-const app = express();
-const http = require('http'). createServer(app);
-const io = require('socket.io')(http);
-const path = require('path');
-const fs = require('fs'). promises;
-
-const PORT = process.env.PORT || 9000;
-const ADMIN_CODE = process.env.ADMIN_CODE || 'admin123';
-
-// Data file paths
-const STATS_FILE = path.join(__dirname, 'data', 'stats.json');
-const CHAT_HISTORY_FILE = path.join(__dirname, 'data', 'chat-history.json');
-const USERS_FILE = path.join(__dirname, 'data', 'users.json');
-
-// ...  [teljes fájl tartalom - ugyanaz mint az eredeti, csak a handleTimerExpiry módosul]
-
-// KEY FIX - Line 754-763 original → new version:
-handleTimerExpiry(io) {
-  if (this.gameOver) return;
-
-  // Broadcast update
-  io.to(this.roomId).emit('gameState', this.getState());
-  io.to(this.roomId). emit('message', '⏰ Lejárt az idő! Következő játékos jön.');
-
-  // FIX #14: Handle AI move after timer expiry
-  if (this.isAIGame && ! this.gameOver) {
-    setTimeout(() => {
-      const aiResult = this.makeAIMove();
-      if (aiResult && aiResult.success) {
-        io.to(this.roomId). emit('gameState', this.getState());
-        
-        if (aiResult.gameOver) {
-          if (aiResult.draw) {
-            io.to(this.roomId).emit('message', '🤝 Döntetlen! ');
-          } else {
-            io.to(this.roomId).emit('message', `🏆 ${aiResult.winner. name} nyert! `);
-          }
-        } else {
-          // Continue timer for next player
-          this.startTimer(() => this.handleTimerExpiry(io));
-        }
-      }
-    }, 500);  // 500ms delay for natural feel
-  } else {
-    // For PvP, just restart timer
-    this.startTimer(() => this.handleTimerExpiry(io));
-  }
-}
+    this.board[row][col] = symbol;
+    this.lastMove = { row, col };
+    this.moveHistory.push({
+      row,
+      col,
+      symbol,
       player: this.currentPlayer
     });
 
