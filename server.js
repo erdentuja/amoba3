@@ -325,22 +325,23 @@ let lobbyChatHistory = [];
 const connectedClients = new Map(); // socketId -> {name, isAdmin, connectedAt, createdRoom}
 const loggedInPlayers = new Map(); // socketId -> {name, loggedInAt}
 
-// Security headers with helmet
+// Security headers with helmet (CSP relaxed for inline handlers and CDN)
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+      scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers (onclick, etc.)
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "ws:", "wss:"], // Allow WebSocket connections
+      connectSrc: ["'self'", "ws:", "wss:", "https://cdn.jsdelivr.net"], // Allow CDN and WebSocket
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"]
     }
   },
-  crossOriginEmbedderPolicy: false, // Allow embedding for better compatibility
+  crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
