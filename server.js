@@ -919,6 +919,25 @@ class GameRoom {
 
     // Restart timer for the next player
     this.startTimer(() => this.handleTimerExpiry(io));
+
+    // IMPORTANT: If it's an AI game and now it's AI's turn, trigger AI move
+    if (this.isAIGame && !this.gameOver) {
+      const currentPlayerObj = this.players[this.currentPlayer];
+      if (currentPlayerObj && currentPlayerObj.isAI) {
+        console.log(`🤖 AI's turn after timer expiry, triggering AI move...`);
+        setTimeout(() => {
+          const aiResult = this.makeAIMove();
+          if (aiResult && aiResult.success) {
+            io.to(this.roomId).emit('gameState', this.getState());
+            console.log(`🤖 AI move completed after timer expiry`);
+
+            if (aiResult.gameOver) {
+              io.to(this.roomId).emit('message', `${aiResult.winner ? aiResult.winner.name + ' wins!' : "It's a draw!"}`);
+            }
+          }
+        }, 500);
+      }
+    }
   }
 
   getTimerRemaining() {
