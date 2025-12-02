@@ -303,7 +303,15 @@ function initSocketConnection() {
       lobby.style.display = 'flex';
 
       // Save player name to localStorage for auto-login on refresh
-      localStorage.setItem('playerName', playerName);
+      // NOTE: For security, admin accounts (András) should manually login each time
+      // Only save guest accounts without passwords for auto-login
+      if (!isAdmin) {
+        localStorage.setItem('playerName', playerName);
+      } else {
+        // Admin accounts: don't auto-login for security
+        localStorage.removeItem('playerName');
+        console.log('ℹ️ Admin account - auto-login disabled for security');
+      }
 
       // Update welcome section
       if (welcomePlayerName) {
@@ -330,6 +338,7 @@ function initSocketConnection() {
     socket.on('loginFailed', ({ error }) => {
       // Clear saved player name so auto-login doesn't retry
       localStorage.removeItem('playerName');
+      localStorage.removeItem('playerPassword'); // Also clear any saved password
 
       // Hide loading screen
       const loadingScreen = document.getElementById('loadingScreen');
