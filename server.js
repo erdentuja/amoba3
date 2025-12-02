@@ -882,23 +882,40 @@ class GameRoom {
     if (globalTimerSettings.enabled && this.players.length === 2 && !this.gameOver) {
       this.timerEndTime = Date.now() + (globalTimerSettings.duration * 1000);
 
+      console.log(`⏱️ Timer started for ${globalTimerSettings.duration}s in room ${this.roomId}, current player: ${this.currentPlayer}`);
+
       this.timer = setTimeout(() => {
+        console.log(`⏰ Timer expired in room ${this.roomId}! Current player before: ${this.currentPlayer}`);
         // Time's up! Call the callback to handle turn skip
         // DON'T switch player here - let handleTimerExpiry do it
-        if (callback) callback();
+        if (callback) {
+          callback();
+        } else {
+          console.log('❌ No callback provided to timer!');
+        }
       }, globalTimerSettings.duration * 1000);
+    } else {
+      console.log(`⏱️ Timer NOT started: enabled=${globalTimerSettings.enabled}, players=${this.players.length}, gameOver=${this.gameOver}`);
     }
   }
 
   handleTimerExpiry(io) {
-    if (this.gameOver) return;
+    console.log(`🔔 handleTimerExpiry called! Room: ${this.roomId}, gameOver: ${this.gameOver}, currentPlayer before: ${this.currentPlayer}`);
+
+    if (this.gameOver) {
+      console.log('⏹️ Game is over, not switching player');
+      return;
+    }
 
     // Switch to next player (skip turn)
+    const oldPlayer = this.currentPlayer;
     this.currentPlayer = (this.currentPlayer + 1) % 2;
+    console.log(`🔄 Player switched from ${oldPlayer} to ${this.currentPlayer}`);
 
     // Broadcast update with new current player
     io.to(this.roomId).emit('gameState', this.getState());
     io.to(this.roomId).emit('message', '⏰ Lejárt az idő! Kör átugrva.');
+    console.log(`📤 Broadcasted gameState and message to room ${this.roomId}`);
 
     // Restart timer for the next player
     this.startTimer(() => this.handleTimerExpiry(io));
