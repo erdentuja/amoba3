@@ -1,0 +1,120 @@
+{
+  "123": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T22:28:13.994Z"
+  },
+  "András": {
+    "password": "admin123",
+    "isAdmin": true,
+    "rank": "Főadmin",
+    "score": 30
+  },
+  "TesztTeszt": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T21:12:02.324Z"
+  },
+  "BoardSize9Test": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T21:54:03.094Z"
+  },
+  "TestUser123": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T22:22:21.398Z"
+  },
+  "Kukucska": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 20,
+    "createdAt": "2025-12-01T22:28:51.681Z"
+  },
+  "TimerTest": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T22:41:03.099Z"
+  },
+  "TimerDebug": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T22:44:12.572Z"
+  },
+  "TimerFixUser": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T22:50:18.563Z"
+  },
+  "DSDSDSDS": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T22:54:51.007Z"
+  },
+  "TimerCSSUser": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T22:58:39.590Z"
+  },
+  "TimerDebug2": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T23:03:19.807Z"
+  },
+  "TimerDebug3": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T23:04:06.254Z"
+  },
+  "TimerWaitUser": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T23:06:54.166Z"
+  },
+  "AITester3": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T23:27:56.865Z"
+  },
+  "AIDebugger3": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T23:35:02.060Z"
+  },
+  "TimerFixTester2": {
+    "password": null,
+    "isAdmin": false,
+    "rank": "Újonc",
+    "score": 0,
+    "createdAt": "2025-12-01T23:41:26.353Z"
+  }
+}

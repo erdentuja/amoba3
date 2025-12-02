@@ -1,0 +1,47 @@
+{
+  "totalGames": 44,
+  "totalGamesCompleted": 5,
+  "activeGames": 19,
+  "peakTimes": [
+    12,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    8
+  ],
+  "boardSizes": {
+    "9": 12,
+    "13": 2,
+    "15": 26,
+    "19": 4
+  },
+  "gameModes": {
+    "pvp": 22,
+    "ai-easy": 20,
+    "ai-medium": 1,
+    "ai-hard": 1,
+    "ai-vs-ai": 0
+  },
+  "aiWins": 0,
+  "playerWins": 5,
+  "draws": 0
+}

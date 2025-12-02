@@ -1,0 +1,84 @@
+/* Emoji Reactions Styles */
+.board-container {
+    position: relative;
+    /* Needed for absolute positioning of overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.reaction-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    /* Let clicks pass through to the board */
+    overflow: hidden;
+    z-index: 100;
+}
+
+.emoji-bar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5px);
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.emoji-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    padding: 5px 10px;
+    border-radius: 50%;
+}
+
+.emoji-btn:hover {
+    transform: scale(1.5) translateY(-5px);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.emoji-btn:active {
+    transform: scale(0.9);
+}
+
+.floating-emoji {
+    position: absolute;
+    font-size: 40px;
+    animation: floatUp 2s ease-out forwards;
+    pointer-events: none;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.5);
+    }
+
+    10% {
+        opacity: 1;
+        transform: translateY(0) scale(1.2);
+    }
+
+    20% {
+        transform: translateY(-10px) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-100px) scale(1);
+    }
+}
