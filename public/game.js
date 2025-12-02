@@ -1,11 +1,71 @@
 // Game constants
-const CELL_SIZE = 35; // Csökkentve a jobb illeszkedés érdekében
+const BASE_CELL_SIZE = 35; // Base cell size for desktop
+let CELL_SIZE = BASE_CELL_SIZE;
 let BOARD_SIZE = 15;
 let CANVAS_SIZE = BOARD_SIZE * CELL_SIZE;
 
+// Responsive canvas sizing
+function calculateResponsiveCanvasSize() {
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
 
+  // Mobile detection
+  const isMobile = screenWidth <= 768;
+  const isPortrait = screenHeight > screenWidth;
 
-console.log('%c 🚀 VERSION 2.0 LOADED - UNDO FIX 🚀 ', 'background: #222; color: #bada55; font-size: 20px;');
+  // Calculate maximum available space
+  let maxWidth, maxHeight;
+
+  if (isMobile) {
+    // Mobile: use most of the screen width
+    maxWidth = screenWidth * 0.95; // 95% of screen width
+    maxHeight = screenHeight * (isPortrait ? 0.5 : 0.7); // 50% portrait, 70% landscape
+  } else {
+    // Desktop: use reasonable size
+    maxWidth = Math.min(screenWidth * 0.6, 700);
+    maxHeight = screenHeight * 0.7;
+  }
+
+  // Calculate cell size to fit
+  const maxSize = Math.min(maxWidth, maxHeight);
+  let newCellSize = Math.floor(maxSize / (BOARD_SIZE + 2)); // +2 for padding
+
+  // Minimum cell size for playability
+  newCellSize = Math.max(newCellSize, isMobile ? 18 : 25);
+  // Maximum cell size to avoid huge boards
+  newCellSize = Math.min(newCellSize, 50);
+
+  return {
+    cellSize: newCellSize,
+    canvasSize: newCellSize * BOARD_SIZE,
+    isMobile: isMobile,
+    isPortrait: isPortrait
+  };
+}
+
+// Apply responsive sizing
+function applyResponsiveCanvas() {
+  const sizing = calculateResponsiveCanvasSize();
+  CELL_SIZE = sizing.cellSize;
+  CANVAS_SIZE = sizing.canvasSize;
+
+  // Update canvas if it exists
+  if (typeof canvas !== 'undefined' && canvas) {
+    canvas.width = CANVAS_SIZE;
+    canvas.height = CANVAS_SIZE;
+    canvas.style.width = CANVAS_SIZE + 'px';
+    canvas.style.height = CANVAS_SIZE + 'px';
+
+    // Redraw board if game is active
+    if (typeof gameState !== 'undefined' && gameState) {
+      drawBoard();
+    }
+  }
+
+  console.log(`📱 Canvas resized: ${CANVAS_SIZE}x${CANVAS_SIZE} (cell: ${CELL_SIZE}px, mobile: ${sizing.isMobile})`);
+}
+
+console.log('%c 🚀 VERSION 2.0 LOADED - MOBILE OPTIMIZED 🚀 ', 'background: #222; color: #bada55; font-size: 20px;');
 
 // DOM elements
 const loginScreen = document.getElementById('loginScreen');
@@ -187,9 +247,24 @@ function init() {
     console.error('❌ Error initializing theme system:', error);
   }
 
-  // Set initial canvas size
-  canvas.width = CANVAS_SIZE;
-  canvas.height = CANVAS_SIZE;
+  // Set initial canvas size (responsive)
+  applyResponsiveCanvas();
+
+  // Add window resize listener for responsive canvas
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      applyResponsiveCanvas();
+    }, 250); // Debounce resize events
+  });
+
+  // Add orientation change listener for mobile
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+      applyResponsiveCanvas();
+    }, 300); // Wait for orientation change to complete
+  });
 
   // Load sound preference
   const savedSound = localStorage.getItem('soundEnabled');

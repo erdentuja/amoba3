@@ -2887,3 +2887,412 @@ header h1 {
   [data-theme="dark"] .timer {
     background: rgba(255, 255, 255, 0.1);
   }
+/* ==========================================================================
+   MOBILE OPTIMIZATIONS
+   ========================================================================== */
+
+/* Mobile-specific improvements for buttons, touch targets, and layout */
+@media (max-width: 768px) {
+  
+  /* Larger touch targets for buttons */
+  .btn {
+    min-height: 48px !important; /* Apple/Google recommended touch target */
+    font-size: 16px !important;
+    padding: 12px 20px !important;
+    margin: 6px 0 !important;
+  }
+
+  /* Larger primary action buttons */
+  .btn-primary, .btn-success {
+    min-height: 52px !important;
+    font-size: 18px !important;
+    font-weight: bold;
+  }
+
+  /* Game control buttons */
+  #undoBtn, #resetBtn, #leaveBtn, #leaveSpectatorBtn {
+    min-height: 48px;
+    font-size: 16px;
+    padding: 12px 16px;
+    margin: 8px 4px;
+  }
+
+  /* Lobby action buttons */
+  #adminLoginBtn, #logoutBtn {
+    min-height: 50px;
+    font-size: 17px;
+    padding: 14px 24px;
+    margin: 10px 8px;
+  }
+
+  /* Input fields - prevent zoom on iOS */
+  input[type="text"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px !important; /* Prevents iOS zoom */
+    min-height: 44px;
+    padding: 12px;
+  }
+
+  /* Login screen optimizations */
+  .login-card {
+    width: 95% !important;
+    max-width: 400px;
+    padding: 20px !important;
+    margin: 10px auto !important;
+  }
+
+  .login-card h2 {
+    font-size: 24px !important;
+  }
+
+  .login-card input {
+    font-size: 16px !important;
+    padding: 14px !important;
+  }
+
+  /* Lobby layout for mobile */
+  .lobby {
+    padding: 10px !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+
+  .lobby-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .lobby-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .lobby-actions .btn {
+    width: 100%;
+    max-width: none;
+  }
+
+  /* Room creation form */
+  .room-creation {
+    padding: 15px !important;
+    margin: 10px 0 !important;
+  }
+
+  .room-creation select {
+    font-size: 16px !important;
+    padding: 12px !important;
+  }
+
+  /* Rooms list */
+  .room-card {
+    padding: 15px !important;
+    margin: 10px 0 !important;
+  }
+
+  .room-card h3 {
+    font-size: 18px !important;
+  }
+
+  .room-card p {
+    font-size: 14px !important;
+  }
+
+  .room-actions {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .room-actions .btn {
+    width: 100%;
+  }
+
+  /* Game area layout */
+  .game-area {
+    flex-direction: column !important;
+    padding: 10px !important;
+  }
+
+  .game-board-container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 auto !important;
+    padding: 10px 0 !important;
+  }
+
+  #gameBoard {
+    display: block;
+    margin: 0 auto;
+    touch-action: none; /* Prevent default touch gestures */
+  }
+
+  .game-info {
+    width: 100% !important;
+    max-width: none !important;
+    margin-top: 15px !important;
+    padding: 15px !important;
+  }
+
+  .game-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .game-controls .btn {
+    flex: 1 1 calc(50% - 8px); /* 2 buttons per row */
+    min-width: 120px;
+  }
+
+  /* Player info cards */
+  .player-info {
+    padding: 12px !important;
+    margin: 8px 0 !important;
+  }
+
+  .player-name {
+    font-size: 16px !important;
+  }
+
+  /* Timer display */
+  .timer {
+    padding: 10px !important;
+    margin: 10px 0 !important;
+  }
+
+  .timer-display {
+    font-size: 20px !important;
+    min-width: 50px;
+  }
+
+  /* Chat system */
+  .chat-container {
+    max-height: 200px !important;
+    margin: 10px 0 !important;
+  }
+
+  .chat-messages {
+    max-height: 150px !important;
+    padding: 10px !important;
+  }
+
+  .chat-message {
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    margin-bottom: 8px !important;
+  }
+
+  #chatInput, #lobbyChatInput {
+    font-size: 16px !important;
+    padding: 12px !important;
+  }
+
+  #chatSendBtn, #lobbyChatSendBtn {
+    min-height: 44px;
+    font-size: 16px;
+    padding: 12px 20px;
+  }
+
+  /* Modal optimizations */
+  .modal-content {
+    width: 90% !important;
+    max-width: 500px !important;
+    margin: 20px auto !important;
+    padding: 20px !important;
+  }
+
+  .modal h2 {
+    font-size: 22px !important;
+  }
+
+  .modal-body {
+    padding: 15px 0 !important;
+  }
+
+  /* Victory/Defeat modals */
+  .victory-modal, .defeat-modal {
+    padding: 20px !important;
+  }
+
+  .victory-modal h2, .defeat-modal h2 {
+    font-size: 28px !important;
+  }
+
+  .victory-actions, .defeat-actions {
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .victory-actions .btn, .defeat-actions .btn {
+    width: 100%;
+  }
+
+  /* Admin panel */
+  .admin-panel {
+    padding: 15px !important;
+    margin: 10px !important;
+  }
+
+  .admin-section {
+    padding: 15px !important;
+    margin: 15px 0 !important;
+  }
+
+  .admin-section h3 {
+    font-size: 18px !important;
+  }
+
+  .admin-list {
+    max-height: 300px !important;
+  }
+
+  .admin-player-item, .admin-room-item {
+    padding: 12px !important;
+    margin: 8px 0 !important;
+  }
+
+  /* Statistics page */
+  .stats-grid {
+    grid-template-columns: 1fr !important; /* Single column on mobile */
+    gap: 15px !important;
+  }
+
+  .stat-card {
+    padding: 15px !important;
+  }
+
+  .stat-value {
+    font-size: 32px !important;
+  }
+
+  /* Online players list */
+  .online-players-list {
+    max-height: 200px !important;
+  }
+
+  .online-player {
+    padding: 10px !important;
+    font-size: 14px !important;
+  }
+
+  /* Header improvements */
+  header h1 {
+    font-size: 28px !important;
+  }
+
+  .subtitle {
+    font-size: 14px !important;
+  }
+
+  /* Prevent text selection during touch */
+  body {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Allow text selection in input fields and chat */
+  input, textarea, .chat-message {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  ::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+}
+
+/* Portrait mode specific optimizations */
+@media (max-width: 768px) and (orientation: portrait) {
+  .game-area {
+    min-height: 100vh;
+  }
+
+  #gameBoard {
+    max-width: 95vw;
+    max-height: 50vh;
+  }
+
+  .game-info {
+    order: 2; /* Info below board in portrait */
+  }
+
+  .chat-container {
+    max-height: 150px !important;
+  }
+}
+
+/* Landscape mode specific optimizations */
+@media (max-width: 1024px) and (orientation: landscape) {
+  .game-area {
+    flex-direction: row !important;
+  }
+
+  .game-board-container {
+    width: 60% !important;
+  }
+
+  .game-info {
+    width: 40% !important;
+    margin-top: 0 !important;
+    margin-left: 15px !important;
+  }
+
+  #gameBoard {
+    max-height: 85vh;
+  }
+}
+
+/* Small mobile devices (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  .btn {
+    font-size: 14px !important;
+    padding: 10px 16px !important;
+  }
+
+  .login-card {
+    padding: 15px !important;
+  }
+
+  .room-card {
+    padding: 12px !important;
+  }
+
+  header h1 {
+    font-size: 24px !important;
+  }
+
+  .modal-content {
+    width: 95% !important;
+    padding: 15px !important;
+  }
+}
+
+/* Tablet optimizations (portrait) */
+@media (min-width: 769px) and (max-width: 1024px) and (orientation: portrait) {
+  .game-area {
+    flex-direction: column !important;
+  }
+
+  .game-board-container, .game-info {
+    width: 100% !important;
+  }
+
+  #gameBoard {
+    max-width: 600px;
+  }
+}
