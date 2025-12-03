@@ -527,6 +527,13 @@ function initSocketConnection() {
       const message = typeof data === 'object' && data.message ? data.message : data;
       showModalMessage(message, 'error');
       sounds.error();
+
+      // If error is about room not existing, clear saved room state
+      if (message && message.includes('nem létezik')) {
+        console.log('🧹 Clearing saved room state (room does not exist)');
+        localStorage.removeItem('currentRoomId');
+        localStorage.removeItem('isSpectator');
+      }
     });
 
     // Handle spectator update
