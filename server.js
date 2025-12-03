@@ -517,7 +517,93 @@ function generateFunnyAIName(difficulty) {
   return `${randomName} (AI)`;
 }
 
-// AI Logic - Minimax with Alpha-Beta Pruning
+// MCTS Node class
+class MCTSNode {
+  constructor(board, boardSize, move, parent, playerSymbol) {
+    this.board = board; // board state (not used after creation to save memory)
+    this.boardSize = boardSize;
+    this.move = move; // [row, col] that led to this node
+    this.parent = parent;
+    this.children = [];
+    this.visits = 0;
+    this.wins = 0;
+    this.playerSymbol = playerSymbol; // symbol of player who just moved
+    this.untriedMoves = null; // populated lazily
+  }
+
+  // UCB1 formula for node selection
+  getUCB1(explorationConstant = 1.41) {
+    if (this.visits === 0) return Infinity;
+    return (this.wins / this.visits) + explorationConstant * Math.sqrt(Math.log(this.parent.visits) / this.visits);
+  }
+
+  // Select best child using UCB1
+  selectChild() {
+    return this.children.reduce((best, child) =>
+      child.getUCB1() > best.getUCB1() ? child : best
+    );
+  }
+
+  // Add child node
+  addChild(move, board, boardSize, playerSymbol) {
+    const childBoard = board.map(row => [...row]);
+    childBoard[move[0]][move[1]] = playerSymbol;
+    const child = new MCTSNode(childBoard, boardSize, move, this, playerSymbol);
+    this.untriedMoves = this.untriedMoves.filter(m => m[0] !== move[0] || m[1] !== move[1]);
+    this.children.push(child);
+    return child;
+  }
+
+  // Get untried moves (lazy initialization)
+  getUntriedMoves(board, boardSize) {
+    if (this.untriedMoves === null) {
+      this.untriedMoves = this.getPossibleMoves(board, boardSize);
+    }
+    return this.untriedMoves;
+  }
+
+  // Get possible moves near occupied cells
+  getPossibleMoves(board, boardSize) {
+    const moves = [];
+    const occupied = [];
+
+    for (let row = 0; row < boardSize; row++) {
+      for (let col = 0; col < boardSize; col++) {
+        if (board[row][col] !== null) {
+          occupied.push([row, col]);
+        }
+      }
+    }
+
+    if (occupied.length === 0) {
+      const center = Math.floor(boardSize / 2);
+      return [[center, center]];
+    }
+
+    const radius = 2;
+    const nearbyMoves = new Set();
+    for (const [row, col] of occupied) {
+      for (let dr = -radius; dr <= radius; dr++) {
+        for (let dc = -radius; dc <= radius; dc++) {
+          const r = row + dr;
+          const c = col + dc;
+          if (r >= 0 && r < boardSize && c >= 0 && c < boardSize && board[r][c] === null) {
+            nearbyMoves.add(`${r},${c}`);
+          }
+        }
+      }
+    }
+
+    nearbyMoves.forEach(key => {
+      const [r, c] = key.split(',').map(Number);
+      moves.push([r, c]);
+    });
+
+    return moves;
+  }
+}
+
+// AI Logic - Minimax with Alpha-Beta Pruning + MCTS for Extreme
 class GomokuAI {
   constructor(difficulty = 'medium') {
     this.difficulty = difficulty;
@@ -530,7 +616,7 @@ class GomokuAI {
       case 'medium': return 2;    // 😊 Közepes - 2 lépés előre
       case 'hard': return 3;      // 😎 Nehéz - 3 lépés előre
       case 'very-hard': return 4; // 🔥 Nagyon nehéz - 4 lépés előre
-      case 'extreme': return 5;   // 💀 Extrém - 5 lépés előre (MEGA HARD!)
+      case 'extreme': return 5;   // 💀 Extrém - Uses MCTS!
       default: return 2;
     }
   }
@@ -793,13 +879,19 @@ class GomokuAI {
     const moves = this.getPossibleMoves(board, boardSize);
     if (moves.length === 0) return null;
 
-    let bestMove = moves[0];
-    let bestValue = -Infinity;
-
     // For easy mode, add some randomness
     if (this.difficulty === 'easy' && Math.random() < 0.4) {
       return moves[Math.floor(Math.random() * moves.length)];
     }
+
+    // Use MCTS for extreme difficulty
+    if (this.difficulty === 'extreme') {
+      return this.getBestMoveMCTS(board, boardSize, aiSymbol, playerSymbol, 2000); // 2 second limit
+    }
+
+    // Use minimax for other difficulties
+    let bestMove = moves[0];
+    let bestValue = -Infinity;
 
     // Sort moves by immediate value for better alpha-beta pruning
     const scoredMoves = moves.map(move => ({
@@ -821,6 +913,131 @@ class GomokuAI {
     }
 
     return bestMove;
+  }
+
+  // Monte Carlo Tree Search - for extreme difficulty
+  getBestMoveMCTS(board, boardSize, aiSymbol, playerSymbol, timeLimit = 2000) {
+    const rootBoard = board.map(row => [...row]);
+    const root = new MCTSNode(rootBoard, boardSize, null, null, playerSymbol); // last move was by player
+
+    const startTime = Date.now();
+    let iterations = 0;
+
+    // Run MCTS iterations within time limit
+    while (Date.now() - startTime < timeLimit) {
+      iterations++;
+
+      // 1. SELECTION - Traverse tree using UCB1
+      let node = root;
+      let currentBoard = board.map(row => [...row]);
+      let currentSymbol = aiSymbol; // AI moves first from root
+
+      while (node.getUntriedMoves(currentBoard, boardSize).length === 0 && node.children.length > 0) {
+        node = node.selectChild();
+        if (node.move) {
+          currentBoard[node.move[0]][node.move[1]] = node.playerSymbol;
+          currentSymbol = node.playerSymbol === 'X' ? 'O' : 'X';
+        }
+      }
+
+      // 2. EXPANSION - Add new child node
+      const untriedMoves = node.getUntriedMoves(currentBoard, boardSize);
+      if (untriedMoves.length > 0 && !this.checkWinner(currentBoard, boardSize)) {
+        const move = untriedMoves[Math.floor(Math.random() * untriedMoves.length)];
+        node = node.addChild(move, currentBoard, boardSize, currentSymbol);
+        currentBoard[move[0]][move[1]] = currentSymbol;
+        currentSymbol = currentSymbol === 'X' ? 'O' : 'X';
+      }
+
+      // 3. SIMULATION - Random playout
+      let simBoard = currentBoard.map(row => [...row]);
+      let simSymbol = currentSymbol;
+      let winner = this.checkWinner(simBoard, boardSize);
+      let maxSimMoves = 50; // Limit simulation depth
+      let simMoves = 0;
+
+      while (!winner && simMoves < maxSimMoves) {
+        const moves = this.getSimulationMoves(simBoard, boardSize);
+        if (moves.length === 0) break;
+
+        const move = moves[Math.floor(Math.random() * moves.length)];
+        simBoard[move[0]][move[1]] = simSymbol;
+        winner = this.checkWinner(simBoard, boardSize);
+        simSymbol = simSymbol === 'X' ? 'O' : 'X';
+        simMoves++;
+      }
+
+      // 4. BACKPROPAGATION - Update statistics
+      let result = 0;
+      if (winner === aiSymbol) result = 1;
+      else if (winner === playerSymbol) result = -1;
+
+      while (node !== null) {
+        node.visits++;
+        // Update wins from perspective of node's player
+        if (node.playerSymbol === aiSymbol) {
+          node.wins += result;
+        } else {
+          node.wins -= result;
+        }
+        node = node.parent;
+      }
+    }
+
+    console.log(`🎲 MCTS: ${iterations} iterations in ${Date.now() - startTime}ms`);
+
+    // Select best move based on visit count (most visited = most promising)
+    if (root.children.length === 0) return null;
+
+    const bestChild = root.children.reduce((best, child) =>
+      child.visits > best.visits ? child : best
+    );
+
+    const winRate = (bestChild.wins / bestChild.visits * 100).toFixed(1);
+    console.log(`🎯 Best move: [${bestChild.move}] - ${bestChild.visits} visits, ${winRate}% win rate`);
+
+    return bestChild.move;
+  }
+
+  // Simplified move generation for MCTS simulations
+  getSimulationMoves(board, boardSize) {
+    const moves = [];
+    const occupied = [];
+
+    for (let row = 0; row < boardSize; row++) {
+      for (let col = 0; col < boardSize; col++) {
+        if (board[row][col] !== null) {
+          occupied.push([row, col]);
+        }
+      }
+    }
+
+    if (occupied.length === 0) {
+      const center = Math.floor(boardSize / 2);
+      return [[center, center]];
+    }
+
+    const radius = 1; // Only immediate neighbors for fast simulation
+    const nearbyMoves = new Set();
+    for (const [row, col] of occupied) {
+      for (let dr = -radius; dr <= radius; dr++) {
+        for (let dc = -radius; dc <= radius; dc++) {
+          const r = row + dr;
+          const c = col + dc;
+          if (r >= 0 && r < boardSize && c >= 0 && c < boardSize && board[r][c] === null) {
+            nearbyMoves.add(`${r},${c}`);
+          }
+        }
+      }
+    }
+
+    nearbyMoves.forEach(key => {
+      const [r, c] = key.split(',').map(Number);
+      moves.push([r, c]);
+    });
+
+    // Limit moves for fast simulation
+    return moves.length > 20 ? moves.slice(0, 20) : moves;
   }
 }
 
