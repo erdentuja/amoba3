@@ -145,10 +145,146 @@ const UserManager = {
       isAdmin: false,
       rank: 'Újonc',
       score: 0,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      stats: {
+        totalGames: 0,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        winRate: 0,
+        pvpWins: 0,
+        pvpLosses: 0,
+        aiEasyWins: 0,
+        aiMediumWins: 0,
+        aiHardWins: 0,
+        aiLosses: 0,
+        longestWinStreak: 0,
+        currentWinStreak: 0,
+        fastestWin: null,
+        boardSizePreference: { '9': 0, '13': 0, '15': 0, '19': 0 },
+        totalMoves: 0,
+        avgMovesPerGame: 0,
+        lastPlayed: null
+      }
     };
     await this.save();
     return this.users[username];
+  },
+
+  // Initialize stats for existing users without stats
+  ensureUserStats(username) {
+    const user = this.users[username];
+    if (!user) return;
+
+    if (!user.stats) {
+      user.stats = {
+        totalGames: 0,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        winRate: 0,
+        pvpWins: 0,
+        pvpLosses: 0,
+        aiEasyWins: 0,
+        aiMediumWins: 0,
+        aiHardWins: 0,
+        aiLosses: 0,
+        longestWinStreak: 0,
+        currentWinStreak: 0,
+        fastestWin: null,
+        boardSizePreference: { '9': 0, '13': 0, '15': 0, '19': 0 },
+        totalMoves: 0,
+        avgMovesPerGame: 0,
+        lastPlayed: null
+      };
+    }
+  },
+
+  // Update player statistics after game
+  async updatePlayerStats(username, gameResult) {
+    const user = this.users[username];
+    if (!user) return;
+
+    this.ensureUserStats(username);
+    const stats = user.stats;
+
+    // Update basic stats
+    stats.totalGames++;
+    stats.lastPlayed = new Date().toISOString();
+    stats.totalMoves += gameResult.moves || 0;
+    stats.avgMovesPerGame = Math.round(stats.totalMoves / stats.totalGames);
+
+    // Update board size preference
+    if (gameResult.boardSize) {
+      stats.boardSizePreference[gameResult.boardSize]++;
+    }
+
+    // Update win/loss/draw stats
+    if (gameResult.result === 'win') {
+      stats.wins++;
+      stats.currentWinStreak++;
+
+      // Update longest win streak
+      if (stats.currentWinStreak > stats.longestWinStreak) {
+        stats.longestWinStreak = stats.currentWinStreak;
+      }
+
+      // Update fastest win
+      if (!stats.fastestWin || gameResult.moves < stats.fastestWin) {
+        stats.fastestWin = gameResult.moves;
+      }
+
+      // Update mode-specific wins
+      if (gameResult.mode === 'pvp') {
+        stats.pvpWins++;
+      } else if (gameResult.mode === 'ai-easy') {
+        stats.aiEasyWins++;
+      } else if (gameResult.mode === 'ai-medium') {
+        stats.aiMediumWins++;
+      } else if (gameResult.mode === 'ai-hard') {
+        stats.aiHardWins++;
+      }
+    } else if (gameResult.result === 'loss') {
+      stats.losses++;
+      stats.currentWinStreak = 0; // Reset win streak
+
+      // Update mode-specific losses
+      if (gameResult.mode === 'pvp') {
+        stats.pvpLosses++;
+      } else if (gameResult.mode.startsWith('ai-')) {
+        stats.aiLosses++;
+      }
+    } else if (gameResult.result === 'draw') {
+      stats.draws++;
+      stats.currentWinStreak = 0; // Reset win streak
+    }
+
+    // Calculate win rate
+    const totalDecidedGames = stats.wins + stats.losses;
+    stats.winRate = totalDecidedGames > 0 ? Math.round((stats.wins / totalDecidedGames) * 100) : 0;
+
+    // Update score (simple: +10 for win, -5 for loss, +2 for draw)
+    if (gameResult.result === 'win') {
+      user.score += 10;
+    } else if (gameResult.result === 'loss') {
+      user.score = Math.max(0, user.score - 5);
+    } else if (gameResult.result === 'draw') {
+      user.score += 2;
+    }
+
+    // Update rank based on score
+    if (user.score >= 100) {
+      user.rank = 'Nagymester';
+    } else if (user.score >= 50) {
+      user.rank = 'Mester';
+    } else if (user.score >= 20) {
+      user.rank = 'Haladó';
+    } else {
+      user.rank = 'Újonc';
+    }
+
+    await this.save();
+    console.log(`📊 Stats updated for ${username}: ${stats.wins}W-${stats.losses}L-${stats.draws}D (${stats.winRate}%)`);
   },
 
   async setPassword(username, password) {
@@ -1703,14 +1839,28 @@ io.on('connection', (socket) => {
         gameStats.activeGames = Math.max(0, gameStats.activeGames - 1);
         gameStats.totalGamesCompleted++;
 
+        // Prepare game result data for stat tracking
+        const gameResult = {
+          boardSize: room.boardSize.toString(),
+          mode: room.gameMode,
+          moves: room.moveHistory.length
+        };
+
         if (result.draw) {
           gameStats.draws++;
           io.to(socket.roomId).emit('message', "It's a draw!");
 
-          // Award points for draw (3 points)
+          // Update player stats for draw
           room.players.forEach(p => {
             if (!p.isAI) {
+              // Award points for draw (3 points) - kept for compatibility
               UserManager.updateScore(p.name, 3).catch(err => console.error('❌ Score update error:', err));
+
+              // Update detailed player stats
+              UserManager.updatePlayerStats(p.name, {
+                ...gameResult,
+                result: 'draw'
+              }).catch(err => console.error('❌ Player stats update error:', err));
             }
           });
 
@@ -1724,14 +1874,26 @@ io.on('connection', (socket) => {
             gameStats.aiWins++;
           } else {
             gameStats.playerWins++;
-            // Award points for win (10 points)
+            // Award points for win (10 points) - kept for compatibility
             UserManager.updateScore(result.winner.name, 10).catch(err => console.error('❌ Score update error:', err));
+
+            // Update winner's detailed stats
+            UserManager.updatePlayerStats(result.winner.name, {
+              ...gameResult,
+              result: 'win'
+            }).catch(err => console.error('❌ Player stats update error:', err));
           }
 
-          // Award points for loss (1 point)
+          // Award points for loss (1 point) - kept for compatibility
           const loser = room.players.find(p => p.id !== result.winner.id);
           if (loser && !loser.isAI) {
             UserManager.updateScore(loser.name, 1).catch(err => console.error('❌ Score update error:', err));
+
+            // Update loser's detailed stats
+            UserManager.updatePlayerStats(loser.name, {
+              ...gameResult,
+              result: 'loss'
+            }).catch(err => console.error('❌ Player stats update error:', err));
           }
 
           saveStats(); // Save stats after game end
