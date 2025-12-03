@@ -8,10 +8,19 @@ const bcrypt = require('bcrypt');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const sanitizeHtml = require('sanitize-html');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const session = require('express-session');
 
 const PORT = process.env.PORT || 9000;
 const ADMIN_CODE = process.env.ADMIN_CODE || 'admin123'; // Change this in production!
 const BCRYPT_ROUNDS = 10; // Salt rounds for bcrypt
+
+// Google OAuth Configuration (optional - set these environment variables to enable)
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || 'http://localhost:9000/auth/google/callback';
+const SESSION_SECRET = process.env.SESSION_SECRET || 'amoba-secret-key-change-in-production';
 
 // Sanitization configuration
 const sanitizeConfig = {
@@ -465,20 +474,112 @@ let lobbyChatHistory = [];
 const connectedClients = new Map(); // socketId -> {name, isAdmin, connectedAt, createdRoom}
 const loggedInPlayers = new Map(); // socketId -> {name, loggedInAt}
 
-// Security headers with helmet (CSP relaxed for inline handlers and CDN)
+// Session middleware (required for passport)
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Passport serialization
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+  done(null, user);
+});
+
+// Configure Google OAuth Strategy (only if credentials are provided)
+if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+    clientID: GOOGLE_CLIENT_ID,
+    clientSecret: GOOGLE_CLIENT_SECRET,
+    callbackURL: GOOGLE_CALLBACK_URL
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      // Extract user info from Google profile
+      const user = {
+        googleId: profile.id,
+        name: profile.displayName || profile.emails[0].value.split('@')[0],
+        email: profile.emails[0].value,
+        avatar: profile.photos[0]?.value || '',
+        authMethod: 'google'
+      };
+
+      // Check if user exists in our database
+      const users = await loadUsers();
+      let existingUser = users.find(u => u.email === user.email || u.googleId === user.googleId);
+
+      if (!existingUser) {
+        // Create new user
+        existingUser = {
+          name: user.name,
+          email: user.email,
+          googleId: user.googleId,
+          avatar: user.avatar,
+          isGuest: false,
+          createdAt: Date.now(),
+          stats: {
+            wins: 0,
+            losses: 0,
+            draws: 0,
+            gamesPlayed: 0,
+            winStreak: 0,
+            bestWinStreak: 0,
+            totalPlayTime: 0,
+            fastestWin: null,
+            rank: 'Újonc',
+            points: 0
+          }
+        };
+        users.push(existingUser);
+        await saveUsers(users);
+        console.log(`✅ New Google user registered: ${existingUser.name} (${existingUser.email})`);
+      } else {
+        // Update Google ID if not set
+        if (!existingUser.googleId) {
+          existingUser.googleId = user.googleId;
+          existingUser.avatar = user.avatar;
+          await saveUsers(users);
+        }
+        console.log(`✅ Google user logged in: ${existingUser.name} (${existingUser.email})`);
+      }
+
+      return done(null, existingUser);
+    } catch (error) {
+      console.error('❌ Google OAuth error:', error);
+      return done(error, null);
+    }
+  }));
+  console.log('🔐 Google OAuth enabled');
+} else {
+  console.log('⚠️  Google OAuth disabled (no credentials provided)');
+}
+
+// Security headers with helmet (CSP relaxed for inline handlers, CDN, and Google OAuth)
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://accounts.google.com"],
       scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers (onclick, etc.)
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "ws:", "wss:", "https://cdn.jsdelivr.net"], // Allow CDN and WebSocket
-      fontSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com"],
+      imgSrc: ["'self'", "data:", "https:", "https://lh3.googleusercontent.com"], // Allow Google profile images
+      connectSrc: ["'self'", "ws:", "wss:", "https://cdn.jsdelivr.net", "https://accounts.google.com"], // Allow CDN, WebSocket, and Google
+      fontSrc: ["'self'", "https://accounts.google.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
-      frameSrc: ["'none'"]
+      frameSrc: ["'self'", "https://accounts.google.com"] // Allow Google OAuth iframe
     }
   },
   crossOriginEmbedderPolicy: false,
@@ -494,6 +595,43 @@ app.get('/', (req, res) => {
 app.get('/game', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+// Google OAuth routes (only if OAuth is enabled)
+if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
+  // Initiate Google OAuth
+  app.get('/auth/google',
+    passport.authenticate('google', { scope: ['profile', 'email'] })
+  );
+
+  // Google OAuth callback
+  app.get('/auth/google/callback',
+    passport.authenticate('google', { failureRedirect: '/' }),
+    (req, res) => {
+      // Successful authentication
+      // Store user info in a way that can be accessed by the game
+      const userData = {
+        playerName: req.user.name,
+        playerEmail: req.user.email,
+        isGuest: false,
+        authMethod: 'google'
+      };
+
+      // Redirect to game with user data in query params (will be stored in localStorage)
+      const params = new URLSearchParams(userData).toString();
+      res.redirect(`/game?${params}`);
+    }
+  );
+
+  // Logout route
+  app.get('/auth/logout', (req, res) => {
+    req.logout((err) => {
+      if (err) {
+        console.error('Logout error:', err);
+      }
+      res.redirect('/');
+    });
+  });
+}
 
 // Serve static files (after specific routes)
 app.use(express.static('public'));

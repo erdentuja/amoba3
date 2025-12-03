@@ -283,6 +283,25 @@ function init() {
     soundBtn.classList.toggle('sound-off', !soundEnabled);
   }
 
+  // Check for Google OAuth callback parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('playerName')) {
+    const playerName = urlParams.get('playerName');
+    const playerEmail = urlParams.get('playerEmail');
+    const authMethod = urlParams.get('authMethod');
+
+    console.log('🔐 Google OAuth login detected:', playerName, playerEmail);
+
+    // Store Google user data in localStorage
+    localStorage.setItem('playerName', playerName);
+    localStorage.setItem('playerEmail', playerEmail || '');
+    localStorage.setItem('isGuest', 'false');
+    localStorage.setItem('authMethod', authMethod || 'google');
+
+    // Clear query parameters from URL (for security and cleanliness)
+    window.history.replaceState({}, document.title, '/game');
+  }
+
   // Auto-login if player name is saved
   const savedPlayerName = localStorage.getItem('playerName');
   const savedPlayerPassword = localStorage.getItem('playerPassword');

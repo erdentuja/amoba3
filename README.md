@@ -39,6 +39,7 @@ Modern, teljes funkcionalitású online amőba játék valós idejű kapcsolatta
 
 ### 📊 Felhasználó Rendszer
 - **Regisztráció/Belépés** - bcrypt titkosított jelszavak
+- **🔐 Google OAuth** - Opcionális belépés Google fiókkal
 - **Vendég mód** - Játék regisztráció nélkül
 - **Rangrendszer**: Újonc → Haladó → Mester → Nagymester
 - **Pontrendszer** - Győzelmek/vereségek alapján
@@ -140,7 +141,46 @@ PORT=9000                    # Szerver port
 ADMIN_CODE=admin123          # Admin jelszó (VÁLTOZTASD MEG!)
 NODE_ENV=production          # Environment mode
 BCRYPT_ROUNDS=10             # Jelszó hash erőssége
+
+# Google OAuth (opcionális)
+GOOGLE_CLIENT_ID=            # Google OAuth Client ID
+GOOGLE_CLIENT_SECRET=        # Google OAuth Client Secret
+GOOGLE_CALLBACK_URL=http://localhost:9000/auth/google/callback
+SESSION_SECRET=              # Session titkosítási kulcs (VÁLTOZTASD MEG!)
 ```
+
+### 🔐 Google OAuth Beállítás (Opcionális)
+
+A Google bejelentkezés engedélyezéséhez:
+
+1. **Google Cloud Console**
+   - Menj: https://console.cloud.google.com
+   - Hozz létre projektet vagy válassz meglévőt
+   - APIs & Services → Credentials
+   - Create Credentials → OAuth 2.0 Client ID
+   - Application type: Web application
+
+2. **Authorized URLs**
+   ```
+   Authorized JavaScript origins:
+   - http://localhost:9000
+   - https://your-domain.com
+
+   Authorized redirect URIs:
+   - http://localhost:9000/auth/google/callback
+   - https://your-domain.com/auth/google/callback
+   ```
+
+3. **Környezeti változók**
+   - Másold ki a **Client ID** és **Client Secret** értékeket
+   - Állítsd be őket környezeti változókként vagy `.env` fájlban
+
+4. **Újraindítás**
+   ```bash
+   npm start
+   ```
+
+**Megjegyzés**: Google OAuth nélkül is működik az app - username/password és vendég mód mindig elérhető!
 
 ## 🐋 Docker Deploy
 
