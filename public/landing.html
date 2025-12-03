@@ -163,6 +163,188 @@
         inset 0 2px 5px rgba(0, 0, 0, 0.2);
     }
 
+    /* Login/Register Modal */
+    .login-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .login-modal.active {
+      display: flex;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 30px;
+      padding: 50px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      position: relative;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .login-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: none;
+      font-size: 2em;
+      cursor: pointer;
+      color: #999;
+      transition: color 0.3s;
+    }
+
+    .login-close:hover {
+      color: #333;
+    }
+
+    .login-title {
+      color: #667eea;
+      font-size: 2em;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .login-subtitle {
+      color: #999;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .login-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .login-tab {
+      flex: 1;
+      padding: 15px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 1.1em;
+      font-weight: 600;
+      color: #999;
+      transition: all 0.3s;
+    }
+
+    .login-tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+
+    .login-form {
+      display: none;
+    }
+
+    .login-form.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 1em;
+      transition: all 0.3s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .form-checkbox input {
+      width: 20px;
+      height: 20px;
+    }
+
+    .form-checkbox label {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .login-button {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .login-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .guest-button {
+      width: 100%;
+      padding: 15px;
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+      border-radius: 10px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: all 0.3s;
+    }
+
+    .guest-button:hover {
+      background: #f0f0ff;
+    }
+
     /* Sections */
     .section {
       background: rgba(255, 255, 255, 0.95);
@@ -434,27 +616,27 @@
     <!-- Quick Action Card -->
     <div class="quick-action-card">
       <div class="quick-icons">
-        <div class="quick-icon" onclick="window.location.href='index.html'">
+        <div class="quick-icon" onclick="openLoginModal()">
           <span>🎮</span>
           <span class="quick-icon-label">Játék</span>
         </div>
-        <div class="quick-icon" onclick="window.location.href='index.html'">
+        <div class="quick-icon" onclick="openLoginModal()">
           <span>🤖</span>
           <span class="quick-icon-label">AI Ellenfél</span>
         </div>
-        <div class="quick-icon" onclick="window.location.href='index.html'">
+        <div class="quick-icon" onclick="openLoginModal()">
           <span>👥</span>
           <span class="quick-icon-label">Multiplayer</span>
         </div>
-        <div class="quick-icon" onclick="window.location.href='index.html'">
+        <div class="quick-icon" onclick="openLoginModal()">
           <span>📊</span>
           <span class="quick-icon-label">Statisztikák</span>
         </div>
       </div>
-      <a href="index.html" class="start-button">
+      <button class="start-button" onclick="openLoginModal()">
         <span>📱</span>
         <span>Játék Indítása</span>
-      </a>
+      </button>
     </div>
 
     <!-- What is Gomoku -->
@@ -723,7 +905,7 @@
     <div class="section" style="text-align: center; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
       <h2 style="color: white;">🚀 Készen állsz?</h2>
       <p style="font-size: 1.2em; margin-bottom: 30px;">Indítsd el a játékot és teszteld le az AI-t!</p>
-      <a href="index.html" class="play-button" style="background: white; color: #f5576c;">Játék Indítása Most!</a>
+      <button class="play-button" style="background: white; color: #f5576c; border: none;" onclick="openLoginModal()">Játék Indítása Most!</button>
     </div>
 
     <!-- Footer -->
@@ -735,5 +917,156 @@
       </p>
     </div>
   </div>
+
+  <!-- Login/Register Modal -->
+  <div class="login-modal" id="loginModal">
+    <div class="login-container">
+      <button class="login-close" onclick="closeLoginModal()">×</button>
+
+      <h2 class="login-title">🎮 Csatlakozz!</h2>
+      <p class="login-subtitle">Válassz belépési módot</p>
+
+      <!-- Tabs -->
+      <div class="login-tabs">
+        <button class="login-tab active" onclick="switchTab('login')">Belépés</button>
+        <button class="login-tab" onclick="switchTab('register')">Regisztráció</button>
+      </div>
+
+      <!-- Login Form -->
+      <form class="login-form active" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Felhasználónév</label>
+          <input type="text" class="form-input" id="loginUsername" placeholder="Add meg a neved" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Jelszó (opcionális vendégeknek)</label>
+          <input type="password" class="form-input" id="loginPassword" placeholder="Jelszó (ha van)">
+        </div>
+
+        <button type="submit" class="login-button">🚀 Belépés</button>
+        <button type="button" class="guest-button" onclick="handleGuestLogin()">👤 Vendégként Tovább</button>
+      </form>
+
+      <!-- Register Form -->
+      <form class="login-form" id="registerForm" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label class="form-label">Felhasználónév</label>
+          <input type="text" class="form-input" id="registerUsername" placeholder="Válassz egy nevet" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Jelszó</label>
+          <input type="password" class="form-input" id="registerPassword" placeholder="Biztonságos jelszó" required minlength="4">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Jelszó megerősítése</label>
+          <input type="password" class="form-input" id="registerPasswordConfirm" placeholder="Jelszó újra" required minlength="4">
+        </div>
+
+        <button type="submit" class="login-button">📝 Regisztráció</button>
+        <button type="button" class="guest-button" onclick="handleGuestLogin()">👤 Vendégként Tovább</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Modal handling
+    function openLoginModal() {
+      document.getElementById('loginModal').classList.add('active');
+    }
+
+    function closeLoginModal() {
+      document.getElementById('loginModal').classList.remove('active');
+    }
+
+    // Tab switching
+    function switchTab(tab) {
+      const tabs = document.querySelectorAll('.login-tab');
+      const forms = document.querySelectorAll('.login-form');
+
+      tabs.forEach(t => t.classList.remove('active'));
+      forms.forEach(f => f.classList.remove('active'));
+
+      if (tab === 'login') {
+        tabs[0].classList.add('active');
+        forms[0].classList.add('active');
+      } else {
+        tabs[1].classList.add('active');
+        forms[1].classList.add('active');
+      }
+    }
+
+    // Guest login
+    function handleGuestLogin() {
+      const guestName = 'Vendég_' + Math.floor(Math.random() * 10000);
+      localStorage.setItem('playerName', guestName);
+      localStorage.setItem('isGuest', 'true');
+      window.location.href = '/game';
+    }
+
+    // Login
+    function handleLogin(event) {
+      event.preventDefault();
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      if (!username) {
+        alert('Kérlek add meg a neved!');
+        return;
+      }
+
+      // If no password, treat as guest
+      if (!password) {
+        localStorage.setItem('playerName', username);
+        localStorage.setItem('isGuest', 'true');
+        window.location.href = '/game';
+        return;
+      }
+
+      // Save credentials for registered user
+      localStorage.setItem('playerName', username);
+      localStorage.setItem('playerPassword', password);
+      localStorage.setItem('isGuest', 'false');
+      window.location.href = '/game';
+    }
+
+    // Register
+    function handleRegister(event) {
+      event.preventDefault();
+      const username = document.getElementById('registerUsername').value.trim();
+      const password = document.getElementById('registerPassword').value;
+      const confirmPassword = document.getElementById('registerPasswordConfirm').value;
+
+      if (!username) {
+        alert('Kérlek add meg a neved!');
+        return;
+      }
+
+      if (password.length < 4) {
+        alert('A jelszónak legalább 4 karakter hosszúnak kell lennie!');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert('A jelszavak nem egyeznek!');
+        return;
+      }
+
+      // Save credentials
+      localStorage.setItem('playerName', username);
+      localStorage.setItem('playerPassword', password);
+      localStorage.setItem('isGuest', 'false');
+      window.location.href = '/game';
+    }
+
+    // Close modal on background click
+    document.getElementById('loginModal').addEventListener('click', function(event) {
+      if (event.target === this) {
+        closeLoginModal();
+      }
+    });
+  </script>
 </body>
 </html>

@@ -488,7 +488,13 @@ app.use(helmet({
 // Serve static files
 app.use(express.static('public'));
 
+// Landing page as home
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'landing.html'));
+});
+
+// Game page
+app.get('/game', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
