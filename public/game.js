@@ -285,12 +285,18 @@ function init() {
 
   // Auto-login if player name is saved
   const savedPlayerName = localStorage.getItem('playerName');
+  const savedPlayerPassword = localStorage.getItem('playerPassword');
+
   if (savedPlayerName) {
+    console.log('🔄 Auto-login for:', savedPlayerName);
     // Wait for socket connection to be established
     // Loading screen is visible by default in HTML
     setTimeout(() => {
       if (socket) {
-        socket.emit('login', { playerName: savedPlayerName });
+        socket.emit('login', {
+          playerName: savedPlayerName,
+          password: savedPlayerPassword || ''
+        });
       }
     }, 100);
   } else {
@@ -366,7 +372,7 @@ function initSocketConnection() {
     });
 
     // Handle login success
-    socket.on('loginSuccess', ({ playerName, isAdmin: adminStatus }) => {
+    socket.on('loginSuccess', ({ playerName, isAdmin: adminStatus, rank }) => {
       myPlayerName = playerName;
       isLoggedIn = true;
       isAdmin = adminStatus || false; // Update global isAdmin flag
@@ -377,16 +383,14 @@ function initSocketConnection() {
       loginScreen.style.display = 'none';
       lobby.style.display = 'flex';
 
-      // Save player name to localStorage for auto-login on refresh
-      // NOTE: For security, admin accounts (András) should manually login each time
-      // Only save guest accounts without passwords for auto-login
-      if (!isAdmin) {
-        localStorage.setItem('playerName', playerName);
-      } else {
-        // Admin accounts: don't auto-login for security
-        localStorage.removeItem('playerName');
-        console.log('ℹ️ Admin account - auto-login disabled for security');
+      // Save login credentials to localStorage for auto-login on page refresh
+      // Save for ALL users (including admins) - only logout button will clear this
+      const savedPassword = document.getElementById('loginPassword').value;
+      localStorage.setItem('playerName', playerName);
+      if (savedPassword) {
+        localStorage.setItem('playerPassword', savedPassword);
       }
+      localStorage.setItem('isAdmin', isAdmin ? 'true' : 'false');
 
       // Update welcome section
       if (welcomePlayerName) {
@@ -402,9 +406,6 @@ function initSocketConnection() {
           adminBtn.style.display = 'none';
         }
       }
-
-      // Admin status is now managed server-side only (security improvement)
-      // No client-side admin code storage
 
       console.log('Logged in as:', playerName, isAdmin ? '(ADMIN)' : '');
     });
@@ -1016,8 +1017,10 @@ function deleteMyRoom(roomId) {
 // Handle logout
 function handleLogout() {
   if (confirm('Biztosan ki szeretnél lépni?')) {
-    // Clear saved player name
+    // Clear ALL saved login data
     localStorage.removeItem('playerName');
+    localStorage.removeItem('playerPassword');
+    localStorage.removeItem('isAdmin');
 
     // Reset state
     isLoggedIn = false;
@@ -1026,6 +1029,7 @@ function handleLogout() {
     gameState = null;
     currentRoomId = null;
     isSpectator = false;
+    isAdmin = false;
 
     // Disconnect socket
     if (socket) {
