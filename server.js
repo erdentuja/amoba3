@@ -1768,12 +1768,18 @@ io.on('connection', (socket) => {
 
   // Leave room (player leaving game)
   socket.on('leaveRoom', () => {
+    console.log('🚪 leaveRoom event received');
+    console.log('  - socket.roomId:', socket.roomId);
+    console.log('  - socket.isSpectator:', socket.isSpectator);
+
     if (!socket.roomId) {
+      console.log('  ❌ No roomId, returning');
       return;
     }
 
     const room = rooms.get(socket.roomId);
     if (!room) {
+      console.log('  ❌ Room not found, returning');
       socket.roomId = null;
       return;
     }
@@ -1782,8 +1788,14 @@ io.on('connection', (socket) => {
     const player = room.players.find(p => p.id === socket.id);
     const isAIvsAI = room.gameMode === 'ai-vs-ai';
 
+    console.log('  - room.gameMode:', room.gameMode);
+    console.log('  - isAIvsAI:', isAIvsAI);
+    console.log('  - player:', player ? player.name : 'null');
+    console.log('  - Will delete room?', !!(player || isAIvsAI));
+
     // Delete room if a player leaves OR if it's an AI vs AI game
     if (player || isAIvsAI) {
+      console.log('  ✅ Deleting room:', socket.roomId);
       // If a player leaves or AI vs AI spectator leaves, delete the entire room and kick everyone
       io.to(socket.roomId).emit('roomClosed', { message: 'Játékos kilépett, szoba bezárva' });
 
