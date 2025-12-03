@@ -3438,30 +3438,30 @@ socket.on('profileError', (error) => {
 let selectedUsers = new Set();
 let allUsers = [];
 
-// Load users into admin table
+// Load users into admin cards
 function loadUsersTable() {
   if (!socket || !isAdmin) return;
 
   // Show loading state
-  const tbody = document.getElementById('userTableBody');
-  if (tbody) {
-    tbody.innerHTML = '<tr><td colspan="7" class="loading-users">Felhasználók betöltése...</td></tr>';
+  const container = document.getElementById('userCardsContainer');
+  if (container) {
+    container.innerHTML = '<div class="user-cards-loading">⏳ Felhasználók betöltése...</div>';
   }
 
   console.log('📊 Loading all users...');
   socket.emit('adminGetAllUsers');
 }
 
-// Render users table
+// Render users as cards
 function renderUsersTable(users) {
   allUsers = users;
-  const tbody = document.getElementById('userTableBody');
-  if (!tbody) return;
+  const container = document.getElementById('userCardsContainer');
+  if (!container) return;
 
-  tbody.innerHTML = '';
+  container.innerHTML = '';
 
   if (!users || users.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #999; padding: 40px;">Nincs felhasználó</td></tr>';
+    container.innerHTML = '<div class="user-cards-empty">📭 Nincs felhasználó</div>';
     return;
   }
 
@@ -3473,13 +3473,14 @@ function renderUsersTable(users) {
   });
 
   sortedUsers.forEach(user => {
-    const tr = document.createElement('tr');
+    const card = document.createElement('div');
+    card.className = 'user-card';
 
-    // Add row classes for visual distinction
+    // Add card classes for visual distinction
     if (user.isBanned) {
-      tr.classList.add('user-banned');
+      card.classList.add('user-banned');
     } else if (user.isAdmin) {
-      tr.classList.add('user-admin');
+      card.classList.add('user-admin');
     }
 
     const isOnline = Array.from(document.querySelectorAll('.online-player')).some(el =>
@@ -3488,32 +3489,52 @@ function renderUsersTable(users) {
 
     const username = user.username.replace(/'/g, "\\'");
 
-    tr.innerHTML = `
-      <td><input type="checkbox" class="user-checkbox" data-username="${username}" ${user.isAdmin && user.username !== myPlayerName ? 'title="Admin felhasználó"' : ''}></td>
-      <td><strong>${user.username}</strong></td>
-      <td>${user.email || '-'}</td>
-      <td>${user.rank || 'Újonc'}</td>
-      <td><strong>${user.score || 0}</strong></td>
-      <td>
-        ${user.isBanned ? '<span class="user-status status-banned">🚫 Bannolva</span>' : ''}
-        ${user.isAdmin ? '<span class="user-status status-admin">👑 Admin</span>' : ''}
-        ${isOnline ? '<span class="user-status status-online">🟢 Online</span>' : '<span class="user-status status-offline">⚫ Offline</span>'}
-      </td>
-      <td class="user-actions">
-        <button class="btn btn-info btn-sm" onclick="viewUserDetails('${username}')" title="Felhasználó részletek">👁️</button>
+    card.innerHTML = `
+      <input type="checkbox" class="user-card-checkbox user-checkbox" data-username="${username}" title="${user.isAdmin ? 'Admin felhasználó' : 'Kijelölés'}">
+
+      <div class="user-card-header">
+        <h3 class="user-card-name">${user.username}</h3>
+        <div class="user-card-badges">
+          ${user.isBanned ? '<span class="user-status status-banned">🚫 Bannolva</span>' : ''}
+          ${user.isAdmin ? '<span class="user-status status-admin">👑 Admin</span>' : ''}
+          ${isOnline ? '<span class="user-status status-online">🟢 Online</span>' : '<span class="user-status status-offline">⚫ Offline</span>'}
+        </div>
+      </div>
+
+      <div class="user-card-body">
+        <div class="user-card-field">
+          <span class="user-card-label">Email</span>
+          <span class="user-card-value">${user.email || '-'}</span>
+        </div>
+        <div class="user-card-field">
+          <span class="user-card-label">Rang</span>
+          <span class="user-card-value">${user.rank || 'Újonc'}</span>
+        </div>
+        <div class="user-card-field">
+          <span class="user-card-label">Pontszám</span>
+          <span class="user-card-value"><strong>${user.score || 0}</strong></span>
+        </div>
+        <div class="user-card-field">
+          <span class="user-card-label">Játékok</span>
+          <span class="user-card-value">${user.stats?.totalGames || 0}</span>
+        </div>
+      </div>
+
+      <div class="user-card-actions">
+        <button class="btn btn-info btn-sm" onclick="viewUserDetails('${username}')" title="Részletek">👁️</button>
         ${!user.isBanned ?
-          `<button class="btn btn-warning btn-sm" onclick="openBanModal('${username}')" title="Bannolás">🚫 Ban</button>` :
-          `<button class="btn btn-success btn-sm" onclick="unbanUser('${username}')" title="Ban feloldása">✅ Unban</button>`
+          `<button class="btn btn-warning btn-sm" onclick="openBanModal('${username}')" title="Bannolás">🚫</button>` :
+          `<button class="btn btn-success btn-sm" onclick="unbanUser('${username}')" title="Unban">✅</button>`
         }
-        <button class="btn btn-primary btn-sm" onclick="openResetPasswordModal('${username}')" title="Jelszó visszaállítása">🔑</button>
-        <button class="btn btn-${user.isAdmin ? 'warning' : 'success'} btn-sm" onclick="toggleUserAdmin('${username}')" title="${user.isAdmin ? 'Admin jogok elvétele' : 'Admin jogok adása'}">
+        <button class="btn btn-primary btn-sm" onclick="openResetPasswordModal('${username}')" title="Jelszó">🔑</button>
+        <button class="btn btn-${user.isAdmin ? 'warning' : 'success'} btn-sm" onclick="toggleUserAdmin('${username}')" title="${user.isAdmin ? 'Admin ↓' : 'Admin ↑'}">
           ${user.isAdmin ? '👤' : '👑'}
         </button>
-        <button class="btn btn-danger btn-sm" onclick="deleteUser('${username}')" title="Felhasználó törlése">🗑️</button>
-      </td>
+        <button class="btn btn-danger btn-sm" onclick="deleteUser('${username}')" title="Törlés">🗑️</button>
+      </div>
     `;
 
-    tbody.appendChild(tr);
+    container.appendChild(card);
   });
 
   // Attach checkbox event listeners
@@ -3521,7 +3542,7 @@ function renderUsersTable(users) {
     checkbox.addEventListener('change', handleUserCheckbox);
   });
 
-  console.log(`✅ ${sortedUsers.length} felhasználó betöltve`);
+  console.log(`✅ ${sortedUsers.length} felhasználó betöltve (card view)`);
 }
 
 // Handle individual checkbox
@@ -3537,21 +3558,16 @@ function handleUserCheckbox(event) {
   updateBulkActionsBar();
 }
 
-// Handle select all checkbox
-const selectAllCheckbox = document.getElementById('selectAllUsers');
-if (selectAllCheckbox) {
-  selectAllCheckbox.addEventListener('change', (event) => {
+// Handle select all button
+const selectAllUsersBtn = document.getElementById('selectAllUsersBtn');
+if (selectAllUsersBtn) {
+  selectAllUsersBtn.addEventListener('click', () => {
     const checkboxes = document.querySelectorAll('.user-checkbox');
 
     checkboxes.forEach(checkbox => {
-      checkbox.checked = event.target.checked;
+      checkbox.checked = true;
       const username = checkbox.dataset.username;
-
-      if (event.target.checked) {
-        selectedUsers.add(username);
-      } else {
-        selectedUsers.delete(username);
-      }
+      selectedUsers.add(username);
     });
 
     updateBulkActionsBar();
@@ -3577,7 +3593,6 @@ if (deselectAllBtn) {
   deselectAllBtn.addEventListener('click', () => {
     selectedUsers.clear();
     document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
-    if (selectAllCheckbox) selectAllCheckbox.checked = false;
     updateBulkActionsBar();
   });
 }

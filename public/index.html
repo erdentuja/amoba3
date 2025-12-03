@@ -229,41 +229,29 @@
           <button id="clearChatBtn" class="btn btn-warning" style="margin-top: 10px; margin-left: 10px;">💬 Chat
             törlése</button>
         </div>
+        <div class="admin-section">
+          <h3>Aktív Szobák (<span id="roomsCount">0</span>)</h3>
+          <div id="adminRoomsList" class="admin-list"></div>
+        </div>
+
         <div class="admin-section admin-section-full">
           <h3>👥 Felhasználókezelés</h3>
 
           <!-- Bulk Actions Bar -->
           <div id="bulkActionsBar" class="bulk-actions-bar" style="display: none;">
             <span id="selectedCount" class="selected-count">0 kiválasztva</span>
-            <button id="bulkBanBtn" class="btn btn-warning btn-sm">🚫 Bulk Ban</button>
-            <button id="bulkDeleteBtn" class="btn btn-danger btn-sm">🗑️ Bulk Törlés</button>
-            <button id="deselectAllBtn" class="btn btn-secondary btn-sm">✖ Kijelölés megszüntetése</button>
+            <div style="display: flex; gap: 8px; margin-left: auto;">
+              <button id="selectAllUsersBtn" class="btn btn-secondary btn-sm">☑️ Összes kijelölése</button>
+              <button id="bulkBanBtn" class="btn btn-warning btn-sm">🚫 Bulk Ban</button>
+              <button id="bulkDeleteBtn" class="btn btn-danger btn-sm">🗑️ Bulk Törlés</button>
+              <button id="deselectAllBtn" class="btn btn-secondary btn-sm">✖ Kijelölés megszüntetése</button>
+            </div>
           </div>
 
-          <!-- User Management Table -->
-          <div class="user-table-container">
-            <table id="userManagementTable" class="user-table">
-              <thead>
-                <tr>
-                  <th><input type="checkbox" id="selectAllUsers"></th>
-                  <th>Felhasználónév</th>
-                  <th>Email</th>
-                  <th>Rang</th>
-                  <th>Pontszám</th>
-                  <th>Státusz</th>
-                  <th>Műveletek</th>
-                </tr>
-              </thead>
-              <tbody id="userTableBody">
-                <!-- Users will be inserted here -->
-              </tbody>
-            </table>
+          <!-- User Cards Grid -->
+          <div id="userCardsContainer" class="user-cards-grid">
+            <!-- User cards will be inserted here -->
           </div>
-        </div>
-
-        <div class="admin-section">
-          <h3>Aktív Szobák (<span id="roomsCount">0</span>)</h3>
-          <div id="adminRoomsList" class="admin-list"></div>
         </div>
 
       </div>
