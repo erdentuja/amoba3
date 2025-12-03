@@ -1780,9 +1780,11 @@ io.on('connection', (socket) => {
 
     const client = connectedClients.get(socket.id);
     const player = room.players.find(p => p.id === socket.id);
+    const isAIvsAI = room.gameMode === 'ai-vs-ai';
 
-    if (player) {
-      // If a player leaves, delete the entire room and kick everyone
+    // Delete room if a player leaves OR if it's an AI vs AI game
+    if (player || isAIvsAI) {
+      // If a player leaves or AI vs AI spectator leaves, delete the entire room and kick everyone
       io.to(socket.roomId).emit('roomClosed', { message: 'Játékos kilépett, szoba bezárva' });
 
       // Clear all players and spectators
