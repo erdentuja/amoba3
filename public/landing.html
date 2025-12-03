@@ -61,6 +61,108 @@
       box-shadow: 0 12px 25px rgba(0,0,0,0.4);
     }
 
+    /* Quick Action Card - Neomorphic Style */
+    .quick-action-card {
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 30px;
+      padding: 50px;
+      margin-bottom: 40px;
+      box-shadow:
+        20px 20px 60px rgba(102, 126, 234, 0.3),
+        -20px -20px 60px rgba(255, 255, 255, 0.5),
+        inset 2px 2px 5px rgba(255, 255, 255, 0.5),
+        inset -2px -2px 5px rgba(102, 126, 234, 0.1);
+      text-align: center;
+    }
+
+    .quick-icons {
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .quick-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      background: linear-gradient(145deg, #ffffff, #f0f0f0);
+      box-shadow:
+        8px 8px 16px rgba(102, 126, 234, 0.15),
+        -8px -8px 16px rgba(255, 255, 255, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5em;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .quick-icon:hover {
+      transform: translateY(-5px) scale(1.05);
+      box-shadow:
+        12px 12px 24px rgba(102, 126, 234, 0.25),
+        -12px -12px 24px rgba(255, 255, 255, 0.8);
+    }
+
+    .quick-icon:active {
+      box-shadow:
+        inset 4px 4px 8px rgba(102, 126, 234, 0.2),
+        inset -4px -4px 8px rgba(255, 255, 255, 0.5);
+    }
+
+    .quick-icon-label {
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.7em;
+      color: #667eea;
+      font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .quick-icon:hover .quick-icon-label {
+      opacity: 1;
+    }
+
+    .start-button {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+      color: white;
+      font-size: 1.5em;
+      font-weight: bold;
+      padding: 20px 60px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow:
+        0 10px 30px rgba(255, 107, 107, 0.4),
+        inset 0 -2px 10px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .start-button:hover {
+      transform: translateY(-3px);
+      box-shadow:
+        0 15px 40px rgba(255, 107, 107, 0.5),
+        inset 0 -2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .start-button:active {
+      transform: translateY(0);
+      box-shadow:
+        0 5px 15px rgba(255, 107, 107, 0.3),
+        inset 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
     /* Sections */
     .section {
       background: rgba(255, 255, 255, 0.95);
@@ -327,7 +429,32 @@
     <div class="header">
       <h1>🎮 Amőba Online</h1>
       <p class="subtitle">Gomoku (Five in a Row) - Teljes játékszabályok és funkciók</p>
-      <a href="index.html" class="play-button">🚀 Játék Indítása</a>
+    </div>
+
+    <!-- Quick Action Card -->
+    <div class="quick-action-card">
+      <div class="quick-icons">
+        <div class="quick-icon" onclick="window.location.href='index.html'">
+          <span>🎮</span>
+          <span class="quick-icon-label">Játék</span>
+        </div>
+        <div class="quick-icon" onclick="window.location.href='index.html'">
+          <span>🤖</span>
+          <span class="quick-icon-label">AI Ellenfél</span>
+        </div>
+        <div class="quick-icon" onclick="window.location.href='index.html'">
+          <span>👥</span>
+          <span class="quick-icon-label">Multiplayer</span>
+        </div>
+        <div class="quick-icon" onclick="window.location.href='index.html'">
+          <span>📊</span>
+          <span class="quick-icon-label">Statisztikák</span>
+        </div>
+      </div>
+      <a href="index.html" class="start-button">
+        <span>📱</span>
+        <span>Játék Indítása</span>
+      </a>
     </div>
 
     <!-- What is Gomoku -->
