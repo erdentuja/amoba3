@@ -678,27 +678,20 @@ function setupEventListeners() {
   viewStatsBtn.addEventListener('click', showStatsView);
   backToLobbyBtn.addEventListener('click', hideStatsView);
 
-  // Profile button
+  // Profile button and back button
   const viewProfileBtn = document.getElementById('viewProfileBtn');
-  const profileModal = document.getElementById('profileModal');
-  const closeProfileModal = document.getElementById('closeProfileModal');
+  const backToLobbyFromProfile = document.getElementById('backToLobbyFromProfile');
 
   if (viewProfileBtn) {
     viewProfileBtn.addEventListener('click', showPlayerProfile);
   }
 
-  if (closeProfileModal) {
-    closeProfileModal.addEventListener('click', () => {
-      profileModal.style.display = 'none';
+  if (backToLobbyFromProfile) {
+    backToLobbyFromProfile.addEventListener('click', () => {
+      document.getElementById('profileView').style.display = 'none';
+      lobby.style.display = 'flex';
     });
   }
-
-  // Close profile modal on outside click
-  window.addEventListener('click', (e) => {
-    if (e.target === profileModal) {
-      profileModal.style.display = 'none';
-    }
-  });
 
   // Canvas events for both mouse and touch
   canvas.addEventListener('click', handleCanvasClick);
@@ -3272,6 +3265,10 @@ function showPlayerProfile() {
     return;
   }
 
+  // Hide lobby, show profile view
+  lobby.style.display = 'none';
+  document.getElementById('profileView').style.display = 'block';
+
   // Request player stats from server
   socket.emit('requestPlayerProfile', { playerName: myPlayerName });
 }
@@ -3352,8 +3349,8 @@ function displayPlayerProfile(profileData) {
     document.getElementById('statLastPlayed').textContent = 'Soha';
   }
 
-  // Show profile modal
-  document.getElementById('profileModal').style.display = 'block';
+  // Profile view is already visible (shown in showPlayerProfile)
+  console.log('✅ Profile displayed successfully!');
 }
 
 // Socket event for receiving player profile

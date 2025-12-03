@@ -523,6 +523,149 @@
       </div>
     </div>
 
+    <!-- Profile View -->
+    <div id="profileView" class="stats-view" style="display: none;">
+      <div class="stats-header">
+        <h2>👤 Játékos Profil</h2>
+        <button id="backToLobbyFromProfile" class="btn btn-primary">⬅️ Vissza a lobbyba</button>
+      </div>
+      <div class="stats-content">
+        <!-- Profile Header -->
+        <div class="profile-header-section" style="text-align: center; margin-bottom: 30px;">
+          <div class="profile-avatar-large" style="font-size: 100px; margin-bottom: 20px;">👤</div>
+          <h1 id="profilePlayerName" style="margin: 0; font-size: 2.5em;">Játékos</h1>
+          <p class="profile-rank-large" style="font-size: 1.3em; color: #666; margin-top: 10px;">
+            <span id="profileRank">Újonc</span>
+            <span class="profile-score-large" style="margin-left: 20px;">🏆 <span id="profileScore">0</span> pont</span>
+          </p>
+        </div>
+
+        <!-- Overall Statistics -->
+        <div class="stats-section-large" style="margin-bottom: 30px;">
+          <h3 style="margin-bottom: 20px; font-size: 1.5em;">📈 Általános Statisztikák</h3>
+          <div class="stats-summary">
+            <div class="stat-card">
+              <div class="stat-value" id="statTotalGames">0</div>
+              <div class="stat-label">Összes játék</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value stat-win" id="statWins">0</div>
+              <div class="stat-label">Győzelmek</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value stat-loss" id="statLosses">0</div>
+              <div class="stat-label">Vereségek</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value stat-draw" id="statDraws">0</div>
+              <div class="stat-label">Döntetlenek</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statWinRate">0%</div>
+              <div class="stat-label">Győzelmi arány</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statAvgMoves">0</div>
+              <div class="stat-label">Átlag lépés/játék</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PvP Statistics -->
+        <div class="stats-section-large" style="margin-bottom: 30px;">
+          <h3 style="margin-bottom: 20px; font-size: 1.5em;">⚔️ PvP Statisztikák</h3>
+          <div class="stats-summary">
+            <div class="stat-card">
+              <div class="stat-value stat-win" id="statPvpWins">0</div>
+              <div class="stat-label">PvP Győzelmek</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value stat-loss" id="statPvpLosses">0</div>
+              <div class="stat-label">PvP Vereségek</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Statistics -->
+        <div class="stats-section-large" style="margin-bottom: 30px;">
+          <h3 style="margin-bottom: 20px; font-size: 1.5em;">🤖 AI Elleni Statisztikák</h3>
+          <div class="stats-summary">
+            <div class="stat-card">
+              <div class="stat-value" id="statAiEasy">0</div>
+              <div class="stat-label">🟢 Easy AI</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statAiMedium">0</div>
+              <div class="stat-label">🟡 Medium AI</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statAiHard">0</div>
+              <div class="stat-label">🔴 Hard AI</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value stat-loss" id="statAiLosses">0</div>
+              <div class="stat-label">AI elleni vereségek</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="stats-section-large" style="margin-bottom: 30px;">
+          <h3 style="margin-bottom: 20px; font-size: 1.5em;">🏆 Eredmények</h3>
+          <div class="stats-summary">
+            <div class="stat-card">
+              <div class="stat-value" id="statLongestStreak">0</div>
+              <div class="stat-label">Leghosszabb sorozat</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statCurrentStreak">0</div>
+              <div class="stat-label">Jelenlegi sorozat</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statFastestWin">-</div>
+              <div class="stat-label">Leggyorsabb győzelem</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Board Preferences -->
+        <div class="stats-section-large">
+          <h3 style="margin-bottom: 20px; font-size: 1.5em;">📐 Táblaméret Preferenciák</h3>
+          <div class="board-prefs-large" style="max-width: 600px; margin: 0 auto;">
+            <div class="board-pref-item" style="display: flex; align-items: center; margin-bottom: 15px;">
+              <span class="board-size-label" style="width: 80px; font-weight: bold;">9x9</span>
+              <div class="board-pref-bar" style="flex: 1; height: 30px; background: #eee; border-radius: 5px; overflow: hidden; margin: 0 15px;">
+                <div class="board-pref-fill" id="boardPref9" style="width: 0%; height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.5s;"></div>
+              </div>
+              <span class="board-pref-count" id="boardPref9Count" style="width: 50px; text-align: right; font-weight: bold;">0</span>
+            </div>
+            <div class="board-pref-item" style="display: flex; align-items: center; margin-bottom: 15px;">
+              <span class="board-size-label" style="width: 80px; font-weight: bold;">13x13</span>
+              <div class="board-pref-bar" style="flex: 1; height: 30px; background: #eee; border-radius: 5px; overflow: hidden; margin: 0 15px;">
+                <div class="board-pref-fill" id="boardPref13" style="width: 0%; height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.5s;"></div>
+              </div>
+              <span class="board-pref-count" id="boardPref13Count" style="width: 50px; text-align: right; font-weight: bold;">0</span>
+            </div>
+            <div class="board-pref-item" style="display: flex; align-items: center; margin-bottom: 15px;">
+              <span class="board-size-label" style="width: 80px; font-weight: bold;">15x15</span>
+              <div class="board-pref-bar" style="flex: 1; height: 30px; background: #eee; border-radius: 5px; overflow: hidden; margin: 0 15px;">
+                <div class="board-pref-fill" id="boardPref15" style="width: 0%; height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.5s;"></div>
+              </div>
+              <span class="board-pref-count" id="boardPref15Count" style="width: 50px; text-align: right; font-weight: bold;">0</span>
+            </div>
+            <div class="board-pref-item" style="display: flex; align-items: center; margin-bottom: 15px;">
+              <span class="board-size-label" style="width: 80px; font-weight: bold;">19x19</span>
+              <div class="board-pref-bar" style="flex: 1; height: 30px; background: #eee; border-radius: 5px; overflow: hidden; margin: 0 15px;">
+                <div class="board-pref-fill" id="boardPref19" style="width: 0%; height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.5s;"></div>
+              </div>
+              <span class="board-pref-count" id="boardPref19Count" style="width: 50px; text-align: right; font-weight: bold;">0</span>
+            </div>
+          </div>
+          <p class="last-played-large" style="text-align: center; margin-top: 30px; font-size: 1.1em; color: #666;">Utoljára játszott: <span id="statLastPlayed" style="font-weight: bold;">Soha</span></p>
+        </div>
+      </div>
+    </div>
+
     <!-- Statistics View -->
     <div id="statsView" class="stats-view" style="display: none;">
       <div class="stats-header">
