@@ -2439,6 +2439,36 @@ io.on('connection', (socket) => {
     socket.emit('gameStats', gameStats);
   });
 
+  // Player profile request
+  socket.on('requestPlayerProfile', ({ playerName }) => {
+    const sanitizedName = sanitizeInput(playerName, 50);
+
+    if (!sanitizedName) {
+      socket.emit('profileError', 'Invalid player name');
+      return;
+    }
+
+    const user = UserManager.getUser(sanitizedName);
+
+    if (!user) {
+      socket.emit('profileError', 'Player not found');
+      return;
+    }
+
+    // Ensure user has stats
+    UserManager.ensureUserStats(sanitizedName);
+
+    // Send profile data
+    socket.emit('playerProfile', {
+      name: sanitizedName,
+      rank: user.rank || 'Újonc',
+      score: user.score || 0,
+      stats: user.stats || {}
+    });
+
+    console.log(`📊 Profile requested for: ${sanitizedName}`);
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
 

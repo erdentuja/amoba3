@@ -263,6 +263,155 @@
       </div>
     </div>
 
+    <!-- Player Profile Modal -->
+    <div id="profileModal" class="modal" style="display: none;">
+      <div class="modal-content profile-modal">
+        <span class="close-modal" id="closeProfileModal">&times;</span>
+        <h2>📊 Játékos Profil</h2>
+
+        <div class="profile-header">
+          <div class="profile-avatar">👤</div>
+          <div class="profile-info">
+            <h3 id="profilePlayerName">Játékos</h3>
+            <p class="profile-rank">
+              <span id="profileRank">Újonc</span>
+              <span class="profile-score">🏆 <span id="profileScore">0</span> pont</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="stats-container">
+          <!-- Overall Stats -->
+          <div class="stats-section">
+            <h4>📈 Általános Statisztikák</h4>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-label">Összes játék</div>
+                <div class="stat-value" id="statTotalGames">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Győzelmek</div>
+                <div class="stat-value stat-win" id="statWins">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Vereségek</div>
+                <div class="stat-value stat-loss" id="statLosses">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Döntetlenek</div>
+                <div class="stat-value stat-draw" id="statDraws">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Győzelmi arány</div>
+                <div class="stat-value" id="statWinRate">0%</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Átlag lépés/játék</div>
+                <div class="stat-value" id="statAvgMoves">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PvP Stats -->
+          <div class="stats-section">
+            <h4>⚔️ PvP Statisztikák</h4>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-label">PvP Győzelmek</div>
+                <div class="stat-value stat-win" id="statPvpWins">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">PvP Vereségek</div>
+                <div class="stat-value stat-loss" id="statPvpLosses">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Stats -->
+          <div class="stats-section">
+            <h4>🤖 AI Elleni Statisztikák</h4>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-label">🟢 Easy AI</div>
+                <div class="stat-value" id="statAiEasy">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">🟡 Medium AI</div>
+                <div class="stat-value" id="statAiMedium">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">🔴 Hard AI</div>
+                <div class="stat-value" id="statAiHard">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">AI Vereségek</div>
+                <div class="stat-value stat-loss" id="statAiLosses">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Achievements -->
+          <div class="stats-section">
+            <h4>🏅 Teljesítmények</h4>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-label">Leghosszabb sorozat</div>
+                <div class="stat-value" id="statLongestStreak">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Jelenlegi sorozat</div>
+                <div class="stat-value" id="statCurrentStreak">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Leggyorsabb győzelem</div>
+                <div class="stat-value" id="statFastestWin">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Board Preferences -->
+          <div class="stats-section">
+            <h4>🎯 Táblaméret Preferencia</h4>
+            <div class="board-prefs">
+              <div class="board-pref-item">
+                <span>9x9</span>
+                <div class="board-pref-bar">
+                  <div class="board-pref-fill" id="boardPref9" style="width: 0%"></div>
+                </div>
+                <span id="boardPref9Count">0</span>
+              </div>
+              <div class="board-pref-item">
+                <span>13x13</span>
+                <div class="board-pref-bar">
+                  <div class="board-pref-fill" id="boardPref13" style="width: 0%"></div>
+                </div>
+                <span id="boardPref13Count">0</span>
+              </div>
+              <div class="board-pref-item">
+                <span>15x15</span>
+                <div class="board-pref-bar">
+                  <div class="board-pref-fill" id="boardPref15" style="width: 0%"></div>
+                </div>
+                <span id="boardPref15Count">0</span>
+              </div>
+              <div class="board-pref-item">
+                <span>19x19</span>
+                <div class="board-pref-bar">
+                  <div class="board-pref-fill" id="boardPref19" style="width: 0%"></div>
+                </div>
+                <span id="boardPref19Count">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Last Played -->
+          <div class="stats-section">
+            <p class="last-played">Utoljára játszott: <span id="statLastPlayed">Soha</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading Screen -->
     <div id="loadingScreen" class="login-screen">
       <div class="login-card">
@@ -309,8 +458,9 @@
               onclick="window.open('rules.html', '_blank')">📖</button>
           </div>
 
-          <!-- Fő gombok (Admin, Stats, Kilépés) -->
+          <!-- Fő gombok (Profil, Admin, Stats, Kilépés) -->
           <div class="main-buttons-group">
+            <button id="viewProfileBtn" class="btn btn-profile">👤 Profilom</button>
             <button id="adminLoginBtn" class="btn btn-admin">🔑 Admin</button>
             <button id="viewStatsBtn" class="btn btn-stats">📊 Statisztikák</button>
             <button id="logoutBtn" class="btn btn-danger">🚪 Kilépés</button>

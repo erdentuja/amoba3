@@ -678,6 +678,28 @@ function setupEventListeners() {
   viewStatsBtn.addEventListener('click', showStatsView);
   backToLobbyBtn.addEventListener('click', hideStatsView);
 
+  // Profile button
+  const viewProfileBtn = document.getElementById('viewProfileBtn');
+  const profileModal = document.getElementById('profileModal');
+  const closeProfileModal = document.getElementById('closeProfileModal');
+
+  if (viewProfileBtn) {
+    viewProfileBtn.addEventListener('click', showPlayerProfile);
+  }
+
+  if (closeProfileModal) {
+    closeProfileModal.addEventListener('click', () => {
+      profileModal.style.display = 'none';
+    });
+  }
+
+  // Close profile modal on outside click
+  window.addEventListener('click', (e) => {
+    if (e.target === profileModal) {
+      profileModal.style.display = 'none';
+    }
+  });
+
   // Canvas events for both mouse and touch
   canvas.addEventListener('click', handleCanvasClick);
   canvas.addEventListener('touchstart', handleCanvasClick, { passive: false });
@@ -3238,3 +3260,107 @@ function showReaction(emoji) {
 window.sendReaction = sendReaction;
 
 window.onload = init;
+
+// ============================================================================
+// PLAYER PROFILE FUNCTIONS
+// ============================================================================
+
+function showPlayerProfile() {
+  if (!myPlayerName) {
+    sounds.error();
+    alert('Nincs bejelentkezve!');
+    return;
+  }
+
+  // Request player stats from server
+  socket.emit('requestPlayerProfile', { playerName: myPlayerName });
+}
+
+function displayPlayerProfile(profileData) {
+  const {name, rank, score, stats} = profileData;
+
+  // Update profile header
+  document.getElementById('profilePlayerName').textContent = name;
+  document.getElementById('profileRank').textContent = rank || 'Újonc';
+  document.getElementById('profileScore').textContent = score || 0;
+
+  // Ensure stats exist
+  if (!stats) {
+    console.warn('No stats available for player');
+    return;
+  }
+
+  // Update overall stats
+  document.getElementById('statTotalGames').textContent = stats.totalGames || 0;
+  document.getElementById('statWins').textContent = stats.wins || 0;
+  document.getElementById('statLosses').textContent = stats.losses || 0;
+  document.getElementById('statDraws').textContent = stats.draws || 0;
+  document.getElementById('statWinRate').textContent = (stats.winRate || 0) + '%';
+  document.getElementById('statAvgMoves').textContent = stats.avgMovesPerGame || 0;
+
+  // Update PvP stats
+  document.getElementById('statPvpWins').textContent = stats.pvpWins || 0;
+  document.getElementById('statPvpLosses').textContent = stats.pvpLosses || 0;
+
+  // Update AI stats
+  document.getElementById('statAiEasy').textContent = stats.aiEasyWins || 0;
+  document.getElementById('statAiMedium').textContent = stats.aiMediumWins || 0;
+  document.getElementById('statAiHard').textContent = stats.aiHardWins || 0;
+  document.getElementById('statAiLosses').textContent = stats.aiLosses || 0;
+
+  // Update achievements
+  document.getElementById('statLongestStreak').textContent = stats.longestWinStreak || 0;
+  document.getElementById('statCurrentStreak').textContent = stats.currentWinStreak || 0;
+  document.getElementById('statFastestWin').textContent = stats.fastestWin ? `${stats.fastestWin} lépés` : '-';
+
+  // Update board preferences
+  const boardPrefs = stats.boardSizePreference || {'9': 0, '13': 0, '15': 0, '19': 0};
+  const maxGames = Math.max(boardPrefs['9'], boardPrefs['13'], boardPrefs['15'], boardPrefs['19'], 1);
+
+  ['9', '13', '15', '19'].forEach(size => {
+    const count = boardPrefs[size] || 0;
+    const percentage = maxGames > 0 ? (count / maxGames) * 100 : 0;
+
+    document.getElementById(`boardPref${size}`).style.width = percentage + '%';
+    document.getElementById(`boardPref${size}Count`).textContent = count;
+  });
+
+  // Update last played
+  if (stats.lastPlayed) {
+    const lastPlayed = new Date(stats.lastPlayed);
+    const now = new Date();
+    const diffMs = now - lastPlayed;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    let lastPlayedText;
+    if (diffMins < 1) {
+      lastPlayedText = 'Most';
+    } else if (diffMins < 60) {
+      lastPlayedText = `${diffMins} perce`;
+    } else if (diffHours < 24) {
+      lastPlayedText = `${diffHours} órája`;
+    } else {
+      lastPlayedText = `${diffDays} napja`;
+    }
+
+    document.getElementById('statLastPlayed').textContent = lastPlayedText;
+  } else {
+    document.getElementById('statLastPlayed').textContent = 'Soha';
+  }
+
+  // Show profile modal
+  document.getElementById('profileModal').style.display = 'block';
+}
+
+// Socket event for receiving player profile
+socket.on('playerProfile', (profileData) => {
+  displayPlayerProfile(profileData);
+});
+
+socket.on('profileError', (error) => {
+  sounds.error();
+  alert('Hiba a profil betöltésekor: ' + error);
+});
+
