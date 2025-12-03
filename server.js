@@ -528,7 +528,7 @@ class GomokuAI {
     switch (difficulty) {
       case 'easy': return 1;
       case 'medium': return 2;
-      case 'hard': return 2;  // Reduced from 3 to 2 to prevent freezing
+      case 'hard': return 4;  // Increased to 4 for stronger play (with optimized move generation)
       default: return 2;
     }
   }
@@ -573,15 +573,15 @@ class GomokuAI {
     // Can't make 5 in a row here
     if (aiCount > 0 && playerCount > 0) return 0;
 
-    // Score based on pattern
+    // Score based on pattern (IMPROVED SCORING)
     if (aiCount === 5) return 100000;  // Win
     if (playerCount === 5) return -100000;  // Loss
-    if (aiCount === 4 && empty === 1) return 10000;  // 4 in a row (almost win)
-    if (playerCount === 4 && empty === 1) return -9000;  // Block opponent's 4
-    if (aiCount === 3 && empty === 2) return 1000;  // 3 in a row
-    if (playerCount === 3 && empty === 2) return -900;  // Block opponent's 3
-    if (aiCount === 2 && empty === 3) return 100;  // 2 in a row
-    if (playerCount === 2 && empty === 3) return -90;  // Block opponent's 2
+    if (aiCount === 4 && empty === 1) return 50000;  // 4 in a row (almost win) - INCREASED
+    if (playerCount === 4 && empty === 1) return -40000;  // Block opponent's 4 - MUST BLOCK!
+    if (aiCount === 3 && empty === 2) return 5000;  // 3 in a row - INCREASED
+    if (playerCount === 3 && empty === 2) return -4500;  // Block opponent's 3 - HIGHER PRIORITY
+    if (aiCount === 2 && empty === 3) return 500;  // 2 in a row - INCREASED
+    if (playerCount === 2 && empty === 3) return -450;  // Block opponent's 2
 
     return 0;
   }
