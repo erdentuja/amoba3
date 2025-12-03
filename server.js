@@ -2468,15 +2468,19 @@ io.on('connection', (socket) => {
     // Ensure user has stats
     UserManager.ensureUserStats(sanitizedName);
 
-    // Send profile data
-    socket.emit('playerProfile', {
+    // Prepare profile data
+    const profileData = {
       name: sanitizedName,
       rank: user.rank || 'Újonc',
       score: user.score || 0,
       stats: user.stats || {}
-    });
+    };
 
     console.log(`📊 Profile requested for: ${sanitizedName}`);
+    console.log(`📊 Sending profile data:`, JSON.stringify(profileData, null, 2));
+
+    // Send profile data
+    socket.emit('playerProfile', profileData);
   });
 
   socket.on('disconnect', () => {
