@@ -1796,39 +1796,57 @@ io.on('connection', (socket) => {
     // Delete room if a player leaves OR if it's an AI vs AI game
     if (player || isAIvsAI) {
       console.log('  ✅ Deleting room:', socket.roomId);
-      // If a player leaves or AI vs AI spectator leaves, delete the entire room and kick everyone
-      io.to(socket.roomId).emit('roomClosed', { message: 'Játékos kilépett, szoba bezárva' });
 
-      // Clear all players and spectators
-      room.players.forEach(p => {
-        if (p.id !== socket.id && !p.isAI) {
-          const playerSocket = io.sockets.sockets.get(p.id);
-          if (playerSocket) {
-            playerSocket.leave(socket.roomId);
-            playerSocket.roomId = null;
-            const playerClient = connectedClients.get(p.id);
-            if (playerClient) {
-              playerClient.room = null;
+      try {
+        // If a player leaves or AI vs AI spectator leaves, delete the entire room and kick everyone
+        console.log('  📤 Emitting roomClosed...');
+        io.to(socket.roomId).emit('roomClosed', { message: 'Játékos kilépett, szoba bezárva' });
+        console.log('  ✅ roomClosed emitted');
+
+        // Clear all players and spectators
+        console.log('  🧹 Clearing', room.players.length, 'players...');
+        room.players.forEach((p, index) => {
+          console.log('    - Processing player', index, ':', p.name, 'isAI:', p.isAI);
+          if (p.id !== socket.id && !p.isAI) {
+            const playerSocket = io.sockets.sockets.get(p.id);
+            if (playerSocket) {
+              playerSocket.leave(socket.roomId);
+              playerSocket.roomId = null;
+              const playerClient = connectedClients.get(p.id);
+              if (playerClient) {
+                playerClient.room = null;
+              }
             }
           }
-        }
-      });
+        });
+        console.log('  ✅ Players cleared');
 
-      room.spectators.forEach(spectator => {
-        const spectatorSocket = io.sockets.sockets.get(spectator.id);
-        if (spectatorSocket) {
-          spectatorSocket.leave(socket.roomId);
-          spectatorSocket.roomId = null;
-          spectatorSocket.isSpectator = false;
-          const spectatorClient = connectedClients.get(spectator.id);
-          if (spectatorClient) {
-            spectatorClient.room = null;
+        console.log('  🧹 Clearing', room.spectators.length, 'spectators...');
+        room.spectators.forEach((spectator, index) => {
+          console.log('    - Processing spectator', index, ':', spectator.name, 'id:', spectator.id);
+          const spectatorSocket = io.sockets.sockets.get(spectator.id);
+          if (spectatorSocket) {
+            console.log('      - Removing spectator from room');
+            spectatorSocket.leave(socket.roomId);
+            spectatorSocket.roomId = null;
+            spectatorSocket.isSpectator = false;
+            const spectatorClient = connectedClients.get(spectator.id);
+            if (spectatorClient) {
+              spectatorClient.room = null;
+            }
+            console.log('      - Spectator removed');
           }
-        }
-      });
+        });
+        console.log('  ✅ Spectators cleared');
 
-      rooms.delete(socket.roomId);
-      console.log('  📋 Rooms after delete:', Array.from(rooms.keys()));
+        console.log('  🗑️ Calling rooms.delete()...');
+        rooms.delete(socket.roomId);
+        console.log('  ✅ rooms.delete() completed!');
+        console.log('  📋 Rooms after delete:', Array.from(rooms.keys()));
+      } catch (error) {
+        console.error('  ❌ ERROR in room deletion:', error);
+        console.error('  Stack:', error.stack);
+      }
     }
 
     socket.leave(socket.roomId);
