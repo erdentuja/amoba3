@@ -335,6 +335,8 @@ function initSocketConnection() {
 
     // Handle rooms list updates
     socket.on('roomsList', (rooms) => {
+      console.log('📋 Received roomsList:', rooms.length, 'rooms');
+      console.log('  Room IDs:', rooms.map(r => r.roomId));
       updateRoomsList(rooms);
     });
 

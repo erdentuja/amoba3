@@ -1828,6 +1828,7 @@ io.on('connection', (socket) => {
       });
 
       rooms.delete(socket.roomId);
+      console.log('  📋 Rooms after delete:', Array.from(rooms.keys()));
     }
 
     socket.leave(socket.roomId);
@@ -1837,7 +1838,9 @@ io.on('connection', (socket) => {
     socket.roomId = null;
 
     // Broadcast updated rooms list
+    console.log('  📢 Broadcasting rooms list...');
     broadcastRoomsList();
+    console.log('  📋 Final rooms count:', rooms.size);
     broadcastOnlinePlayers();
     broadcastLobbyPlayers();
   });
