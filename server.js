@@ -588,8 +588,69 @@ class GomokuAI {
     return 0;
   }
 
+  // SMART MOVE ORDERING - prioritize threatening moves
+  orderMovesByPriority(moves, board, boardSize, aiSymbol, playerSymbol) {
+    const scored = moves.map(([row, col]) => {
+      let score = 0;
+
+      // Try the move and evaluate
+      board[row][col] = aiSymbol;
+      const aiEval = this.evaluatePosition(board, boardSize, row, col, aiSymbol);
+      board[row][col] = playerSymbol;
+      const playerEval = this.evaluatePosition(board, boardSize, row, col, playerSymbol);
+      board[row][col] = null;
+
+      // Prioritize: blocking > attacking
+      score = playerEval * 1.2 + aiEval;
+
+      return { move: [row, col], score };
+    });
+
+    // Sort by score (highest first)
+    scored.sort((a, b) => b.score - a.score);
+    return scored.map(s => s.move);
+  }
+
+  // Evaluate a single position quickly
+  evaluatePosition(board, boardSize, row, col, symbol) {
+    let score = 0;
+    const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
+
+    for (const [dx, dy] of directions) {
+      let count = 1;
+      let empty = 0;
+
+      // Check forward
+      for (let i = 1; i < 5; i++) {
+        const r = row + i * dx;
+        const c = col + i * dy;
+        if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) break;
+        if (board[r][c] === symbol) count++;
+        else if (board[r][c] === null) empty++;
+        else break;
+      }
+
+      // Check backward
+      for (let i = 1; i < 5; i++) {
+        const r = row - i * dx;
+        const c = col - i * dy;
+        if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) break;
+        if (board[r][c] === symbol) count++;
+        else if (board[r][c] === null) empty++;
+        else break;
+      }
+
+      // Score based on count
+      if (count >= 4) score += 10000;  // Winning/blocking move!
+      else if (count === 3) score += 1000;
+      else if (count === 2) score += 100;
+    }
+
+    return score;
+  }
+
   // Get all possible moves (with smart filtering)
-  getPossibleMoves(board, boardSize) {
+  getPossibleMoves(board, boardSize, aiSymbol, playerSymbol, useOrdering = true) {
     const moves = [];
     const occupied = [];
 
@@ -609,7 +670,6 @@ class GomokuAI {
     }
 
     // Get cells near occupied ones - OPTIMIZED for speed
-    // Use radius 1 for all difficulties to keep it fast
     const radius = 1;  // Only check immediate neighbors
     const nearbyMoves = new Set();
     for (const [row, col] of occupied) {
@@ -629,19 +689,20 @@ class GomokuAI {
       moves.push([r, c]);
     });
 
-    // Limit number of moves to consider (for performance)
-    // Reduce max moves for higher difficulties
-    const maxMoves = this.difficulty === 'extreme' || this.difficulty === 'very-hard' ? 15 : 20;
+    // Limit number of moves
+    const maxMoves = 12;  // Reduced further for speed
     if (moves.length > maxMoves) {
-      // Fisher-Yates shuffle
-      for (let i = moves.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [moves[i], moves[j]] = [moves[j], moves[i]];
+      // Use move ordering for better pruning
+      if (useOrdering) {
+        const ordered = this.orderMovesByPriority(moves, board, boardSize, aiSymbol, playerSymbol);
+        return ordered.slice(0, maxMoves);
+      } else {
+        return moves.slice(0, maxMoves);
       }
-      return moves.slice(0, maxMoves);
     }
 
-    return moves.length > 0 ? moves : this.getAllEmptyCells(board, boardSize);
+    return useOrdering && moves.length > 0 ?
+      this.orderMovesByPriority(moves, board, boardSize, aiSymbol, playerSymbol) : moves;
   }
 
   getAllEmptyCells(board, boardSize) {
@@ -656,7 +717,7 @@ class GomokuAI {
     return moves;
   }
 
-  // Minimax with Alpha-Beta Pruning
+  // Minimax with Alpha-Beta Pruning + Move Ordering
   minimax(board, boardSize, depth, alpha, beta, isMaximizing, aiSymbol, playerSymbol) {
     // Check terminal states
     const winner = this.checkWinner(board, boardSize);
@@ -666,7 +727,8 @@ class GomokuAI {
       return this.evaluateBoard(board, boardSize, aiSymbol, playerSymbol);
     }
 
-    const moves = this.getPossibleMoves(board, boardSize);
+    // USE MOVE ORDERING for better alpha-beta pruning!
+    const moves = this.getPossibleMoves(board, boardSize, aiSymbol, playerSymbol, true);
     if (moves.length === 0) return 0;  // Draw
 
     if (isMaximizing) {
