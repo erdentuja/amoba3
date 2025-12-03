@@ -1117,7 +1117,8 @@ class GameRoom {
       timerEnabled: globalTimerSettings.enabled,
       timerDuration: globalTimerSettings.duration,
       timerRemaining: this.getTimerRemaining(),
-      undoEnabled: globalUndoEnabled // Send global setting to client
+      undoEnabled: globalUndoEnabled, // Send global setting to client
+      gameMode: this.gameMode // Send game mode (pvp, ai-easy, ai-medium, ai-hard, ai-vs-ai)
     };
   }
 }
