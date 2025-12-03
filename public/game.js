@@ -3269,6 +3269,35 @@ function showPlayerProfile() {
   lobby.style.display = 'none';
   document.getElementById('profileView').style.display = 'block';
 
+  // Clear previous profile data (to avoid showing old user's data)
+  document.getElementById('profilePlayerName').textContent = 'Töltés...';
+  document.getElementById('profileRank').textContent = '...';
+  document.getElementById('profileScore').textContent = '0';
+  document.getElementById('statTotalGames').textContent = '0';
+  document.getElementById('statWins').textContent = '0';
+  document.getElementById('statLosses').textContent = '0';
+  document.getElementById('statDraws').textContent = '0';
+  document.getElementById('statWinRate').textContent = '0%';
+  document.getElementById('statAvgMoves').textContent = '0';
+  document.getElementById('statPvpWins').textContent = '0';
+  document.getElementById('statPvpLosses').textContent = '0';
+  document.getElementById('statAiEasy').textContent = '0';
+  document.getElementById('statAiMedium').textContent = '0';
+  document.getElementById('statAiHard').textContent = '0';
+  document.getElementById('statAiLosses').textContent = '0';
+  document.getElementById('statLongestStreak').textContent = '0';
+  document.getElementById('statCurrentStreak').textContent = '0';
+  document.getElementById('statFastestWin').textContent = '-';
+  document.getElementById('boardPref9').style.width = '0%';
+  document.getElementById('boardPref9Count').textContent = '0';
+  document.getElementById('boardPref13').style.width = '0%';
+  document.getElementById('boardPref13Count').textContent = '0';
+  document.getElementById('boardPref15').style.width = '0%';
+  document.getElementById('boardPref15Count').textContent = '0';
+  document.getElementById('boardPref19').style.width = '0%';
+  document.getElementById('boardPref19Count').textContent = '0';
+  document.getElementById('statLastPlayed').textContent = 'Soha';
+
   // Request player stats from server
   socket.emit('requestPlayerProfile', { playerName: myPlayerName });
 }
