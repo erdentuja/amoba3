@@ -4191,3 +4191,78 @@ header h1 {
   75% { content: "⌛ "; }
   100% { content: "⏳ "; }
 }
+
+/* Full width admin section for user management */
+.admin-section-full {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: none;
+}
+
+/* Better table appearance */
+.user-table {
+  width: 100%;
+  background: white;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.user-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.user-table thead th {
+  padding: 16px 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.user-table tbody td {
+  padding: 14px 12px;
+  vertical-align: middle;
+}
+
+.user-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.user-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* Make action buttons inline and compact */
+.user-actions {
+  white-space: nowrap;
+}
+
+.user-actions .btn {
+  margin-right: 4px;
+  margin-bottom: 4px;
+}
+
+.user-actions .btn:last-child {
+  margin-right: 0;
+}
+
+/* Status badges inline */
+.user-status {
+  display: inline-block;
+  margin-right: 4px;
+}
+
+/* Alternating row colors for better readability */
+.user-table tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.user-table tbody tr.user-admin {
+  background-color: #eff6ff !important;
+  border-left: 4px solid #3b82f6;
+}
+
+.user-table tbody tr.user-banned {
+  background-color: #fef2f2 !important;
+  border-left: 4px solid #ef4444;
+}
