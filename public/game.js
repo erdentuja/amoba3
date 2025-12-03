@@ -3943,9 +3943,8 @@ if (socket) {
 }
 
 // Load users table when admin panel opens
-const adminPanel = document.getElementById('adminPanel');
-if (adminPanel) {
-  const observer = new MutationObserver((mutations) => {
+if (typeof adminPanel !== 'undefined' && adminPanel) {
+  const adminPanelObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
         if (adminPanel.style.display !== 'none' && isAdmin) {
@@ -3955,7 +3954,7 @@ if (adminPanel) {
     });
   });
 
-  observer.observe(adminPanel, { attributes: true });
+  adminPanelObserver.observe(adminPanel, { attributes: true });
 }
 
 // Socket listener for all users response
