@@ -859,16 +859,16 @@ function handleGameOver(winner) {
         console.log('➡️ DRAW! Showing message modal');
         showModalMessage('Döntetlen! 🤝', 'info');
       }
-    } else if (isAIvsAI && currentRoomId) {
-      // AI vs AI game ended - show victory modal for the room creator/observer
-      console.log('➡️ AI vs AI game ended! Showing victory modal');
+    } else if (isAIvsAI) {
+      // AI vs AI game ended - show victory modal for anyone watching (creator, spectator, observer)
+      console.log('➡️ AI vs AI game ended! Showing victory modal for observer/spectator');
       if (winner) {
         showVictoryModal(winner);
       } else {
         showModalMessage('Döntetlen az AI játékban! 🤝', 'info');
       }
     } else {
-      console.log('➡️ Not showing modal - not a player (spectator or observer)');
+      console.log('➡️ Not showing modal - not a player and not AI vs AI');
     }
   }
 }
