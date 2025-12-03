@@ -494,6 +494,7 @@ app.get('/', (req, res) => {
 
 // Game state management
 const rooms = new Map();
+const pendingRoomDeletions = new Map(); // roomId -> timeout (for delayed room deletion after disconnect)
 let roomIdCounter = 1000; // Start from 1000 for nicer room IDs
 
 // Generate unique room ID
@@ -1500,6 +1501,13 @@ io.on('connection', (socket) => {
     if (joined) {
       socket.join(roomId);
       socket.roomId = roomId;
+
+      // Cancel pending room deletion (player reconnected!)
+      if (pendingRoomDeletions.has(roomId)) {
+        console.log(`✅ Player reconnected to room ${roomId}. Cancelling deletion.`);
+        clearTimeout(pendingRoomDeletions.get(roomId));
+        pendingRoomDeletions.delete(roomId);
+      }
 
       // Update connected client info
       client.room = roomId;
@@ -2571,21 +2579,42 @@ io.on('connection', (socket) => {
         const isSpectator = socket.isSpectator;
 
         if (isPlayer) {
-          // If a player disconnects, delete the entire room
-          io.to(socket.roomId).emit('roomClosed', { message: 'Játékos kilépett, szoba bezárva' });
+          // If a player disconnects, wait 10 seconds before deleting the room
+          // This allows F5 refresh or quick reconnects
+          const roomId = socket.roomId;
+          console.log(`⏱️ Player ${player.name} disconnected from room ${roomId}. Waiting 10s before deletion...`);
 
-          // Kick all spectators back to lobby
-          room.spectators.forEach(spectator => {
-            const spectatorSocket = io.sockets.sockets.get(spectator.id);
-            if (spectatorSocket) {
-              spectatorSocket.leave(socket.roomId);
-              spectatorSocket.roomId = null;
-              spectatorSocket.isSpectator = false;
+          // Clear any existing pending deletion for this room
+          if (pendingRoomDeletions.has(roomId)) {
+            clearTimeout(pendingRoomDeletions.get(roomId));
+          }
+
+          // Schedule room deletion after 10 seconds
+          const deletionTimeout = setTimeout(() => {
+            const roomToDelete = rooms.get(roomId);
+            if (roomToDelete) {
+              console.log(`⏰ 10 seconds passed. Deleting room ${roomId}`);
+
+              // Notify everyone in the room
+              io.to(roomId).emit('roomClosed', { message: 'Játékos nem tért vissza, szoba bezárva' });
+
+              // Kick all spectators back to lobby
+              roomToDelete.spectators.forEach(spectator => {
+                const spectatorSocket = io.sockets.sockets.get(spectator.id);
+                if (spectatorSocket) {
+                  spectatorSocket.leave(roomId);
+                  spectatorSocket.roomId = null;
+                  spectatorSocket.isSpectator = false;
+                }
+              });
+
+              rooms.delete(roomId);
+              pendingRoomDeletions.delete(roomId);
+              broadcastRoomsList();
             }
-          });
+          }, 10000); // 10 seconds
 
-          rooms.delete(socket.roomId);
-          console.log(`Room ${socket.roomId} deleted because player ${player.name} disconnected`);
+          pendingRoomDeletions.set(roomId, deletionTimeout);
         } else if (isSpectator) {
           // If a spectator disconnects, just remove them
           room.removeSpectator(socket.id);
