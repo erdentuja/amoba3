@@ -783,9 +783,18 @@ function declineUndo() {
 // Victory/Defeat modal control functions
 function requestNewGame() {
   if (socket && currentRoomId) {
-    socket.emit('requestNewGame');
-    closeVictoryModal();
-    closeDefeatModal();
+    // For AI vs AI games, directly reset the game
+    if (gameState && gameState.gameMode === 'ai-vs-ai') {
+      console.log('🔄 Resetting AI vs AI game');
+      socket.emit('resetGame');
+      closeVictoryModal();
+      closeDefeatModal();
+    } else {
+      // For PvP games, request new game from opponent
+      socket.emit('requestNewGame');
+      closeVictoryModal();
+      closeDefeatModal();
+    }
   }
 }
 
@@ -825,12 +834,15 @@ function handleGameOver(winner) {
     startWinningAnimation();
   }
 
-  // Only show modals if I'm actually a player (not spectator)
-  if (!isSpectator && gameState && gameState.players) {
-    const amIPlayer = gameState.players.some(p => p.id === myPlayerId);
-    console.log('Am I a player?', amIPlayer);
+  // Show modals for players or AI vs AI games
+  if (gameState && gameState.players) {
+    const amIPlayer = !isSpectator && gameState.players.some(p => p.id === myPlayerId);
+    const isAIvsAI = gameState.gameMode === 'ai-vs-ai';
+
+    console.log('Am I a player?', amIPlayer, 'Is AI vs AI?', isAIvsAI);
 
     if (amIPlayer) {
+      // I'm a player in the game
       if (winner) {
         // Check if I won or lost
         if (winner.id === myPlayerId) {
@@ -846,6 +858,14 @@ function handleGameOver(winner) {
         // Draw - show message modal
         console.log('➡️ DRAW! Showing message modal');
         showModalMessage('Döntetlen! 🤝', 'info');
+      }
+    } else if (isAIvsAI && currentRoomId) {
+      // AI vs AI game ended - show victory modal for the room creator/observer
+      console.log('➡️ AI vs AI game ended! Showing victory modal');
+      if (winner) {
+        showVictoryModal(winner);
+      } else {
+        showModalMessage('Döntetlen az AI játékban! 🤝', 'info');
       }
     } else {
       console.log('➡️ Not showing modal - not a player (spectator or observer)');
