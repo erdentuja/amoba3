@@ -1797,10 +1797,13 @@ io.on('connection', (socket) => {
     if (player || isAIvsAI) {
       console.log('  ✅ Deleting room:', socket.roomId);
 
+      // IMPORTANT: Save roomId before modifying socket properties!
+      const roomIdToDelete = socket.roomId;
+
       try {
         // If a player leaves or AI vs AI spectator leaves, delete the entire room and kick everyone
         console.log('  📤 Emitting roomClosed...');
-        io.to(socket.roomId).emit('roomClosed', { message: 'Játékos kilépett, szoba bezárva' });
+        io.to(roomIdToDelete).emit('roomClosed', { message: 'Játékos kilépett, szoba bezárva' });
         console.log('  ✅ roomClosed emitted');
 
         // Clear all players and spectators
@@ -1810,7 +1813,7 @@ io.on('connection', (socket) => {
           if (p.id !== socket.id && !p.isAI) {
             const playerSocket = io.sockets.sockets.get(p.id);
             if (playerSocket) {
-              playerSocket.leave(socket.roomId);
+              playerSocket.leave(roomIdToDelete);
               playerSocket.roomId = null;
               const playerClient = connectedClients.get(p.id);
               if (playerClient) {
@@ -1827,8 +1830,8 @@ io.on('connection', (socket) => {
           const spectatorSocket = io.sockets.sockets.get(spectator.id);
           if (spectatorSocket) {
             console.log('      - Removing spectator from room');
-            spectatorSocket.leave(socket.roomId);
-            spectatorSocket.roomId = null;
+            spectatorSocket.leave(roomIdToDelete);
+            spectatorSocket.roomId = null;  // This may set socket.roomId to null if spectator is the one leaving!
             spectatorSocket.isSpectator = false;
             const spectatorClient = connectedClients.get(spectator.id);
             if (spectatorClient) {
@@ -1839,8 +1842,8 @@ io.on('connection', (socket) => {
         });
         console.log('  ✅ Spectators cleared');
 
-        console.log('  🗑️ Calling rooms.delete()...');
-        rooms.delete(socket.roomId);
+        console.log('  🗑️ Calling rooms.delete() with roomId:', roomIdToDelete);
+        rooms.delete(roomIdToDelete);  // Use saved roomId instead of socket.roomId (which may be null now)
         console.log('  ✅ rooms.delete() completed!');
         console.log('  📋 Rooms after delete:', Array.from(rooms.keys()));
       } catch (error) {
