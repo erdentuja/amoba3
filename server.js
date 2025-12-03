@@ -526,9 +526,11 @@ class GomokuAI {
 
   getDepthByDifficulty(difficulty) {
     switch (difficulty) {
-      case 'easy': return 1;
-      case 'medium': return 2;
-      case 'hard': return 4;  // Increased to 4 for stronger play (with optimized move generation)
+      case 'easy': return 1;      // 🤪 Bugyuta - 1 lépés előre
+      case 'medium': return 2;    // 😊 Közepes - 2 lépés előre
+      case 'hard': return 4;      // 😎 Nehéz - 4 lépés előre
+      case 'very-hard': return 5; // 🔥 Nagyon nehéz - 5 lépés előre
+      case 'extreme': return 6;   // 💀 Extrém - 6 lépés előre (MEGA HARD!)
       default: return 2;
     }
   }
