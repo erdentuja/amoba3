@@ -172,9 +172,9 @@ const UserManager = {
   },
 
   // Initialize stats for existing users without stats
-  ensureUserStats(username) {
+  async ensureUserStats(username) {
     const user = this.users[username];
-    if (!user) return;
+    if (!user) return false;
 
     if (!user.stats) {
       user.stats = {
@@ -197,7 +197,11 @@ const UserManager = {
         avgMovesPerGame: 0,
         lastPlayed: null
       };
+      await this.save();
+      console.log(`📊 Stats initialized for: ${username}`);
+      return true;
     }
+    return false;
   },
 
   // Update player statistics after game
@@ -1356,6 +1360,12 @@ io.on('connection', (socket) => {
     });
 
     const userRank = user ? (user.rank || (isAdmin ? 'Admin' : 'Újonc')) : 'Vendég';
+
+    // Ensure user has stats initialized
+    if (user) {
+      await UserManager.ensureUserStats(name);
+    }
+
     socket.emit('loginSuccess', { playerName: name, isAdmin, rank: userRank });
     console.log('Player logged in:', name, socket.id, isAdmin ? '(ADMIN)' : '', `[${userRank}]`);
 
