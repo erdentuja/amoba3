@@ -839,7 +839,12 @@ function handleGameOver(winner) {
     const amIPlayer = !isSpectator && gameState.players.some(p => p.id === myPlayerId);
     const isAIvsAI = gameState.gameMode === 'ai-vs-ai';
 
-    console.log('Am I a player?', amIPlayer, 'Is AI vs AI?', isAIvsAI);
+    console.log('🔍 MODAL DEBUG:');
+    console.log('  - Am I a player?', amIPlayer);
+    console.log('  - Is AI vs AI?', isAIvsAI);
+    console.log('  - gameMode:', gameState.gameMode);
+    console.log('  - isSpectator:', isSpectator);
+    console.log('  - winner:', winner);
 
     if (amIPlayer) {
       // I'm a player in the game
