@@ -410,6 +410,21 @@ function initSocketConnection() {
       }
 
       console.log('Logged in as:', playerName, isAdmin ? '(ADMIN)' : '');
+
+      // Auto-rejoin room if there was a saved room (for F5 refresh)
+      const savedRoomId = localStorage.getItem('currentRoomId');
+      const savedIsSpectator = localStorage.getItem('isSpectator') === 'true';
+
+      if (savedRoomId) {
+        console.log('🔄 Auto-rejoining room:', savedRoomId, 'as', savedIsSpectator ? 'spectator' : 'player');
+        setTimeout(() => {
+          if (savedIsSpectator) {
+            socket.emit('watchRoom', { roomId: savedRoomId });
+          } else {
+            socket.emit('joinRoom', { roomId: savedRoomId });
+          }
+        }, 200);
+      }
     });
 
     // Handle login failed
@@ -440,6 +455,10 @@ function initSocketConnection() {
       CANVAS_SIZE = BOARD_SIZE * CELL_SIZE;
       canvas.width = CANVAS_SIZE;
       canvas.height = CANVAS_SIZE;
+
+      // Save room state to localStorage for auto-rejoin on refresh
+      localStorage.setItem('currentRoomId', roomId);
+      localStorage.setItem('isSpectator', 'false');
 
       // Update room ID display
       if (roomIdDisplay) {
@@ -547,6 +566,11 @@ function initSocketConnection() {
     socket.on('spectatorJoined', ({ roomId }) => {
       isSpectator = true;
       currentRoomId = roomId;
+
+      // Save room state to localStorage for auto-rejoin on refresh
+      localStorage.setItem('currentRoomId', roomId);
+      localStorage.setItem('isSpectator', 'true');
+
       lobby.style.display = 'none';
       gameArea.style.display = 'flex';
 
@@ -591,6 +615,11 @@ function initSocketConnection() {
     socket.on('roomClosed', ({ message }) => {
       isSpectator = false;
       currentRoomId = null;
+
+      // Clear room state from localStorage
+      localStorage.removeItem('currentRoomId');
+      localStorage.removeItem('isSpectator');
+
       gameArea.style.display = 'none';
       lobby.style.display = 'flex';
 
@@ -1137,6 +1166,10 @@ function leaveGame() {
   if (socket && currentRoomId) {
     socket.emit('leaveRoom');
   }
+
+  // Clear room state from localStorage
+  localStorage.removeItem('currentRoomId');
+  localStorage.removeItem('isSpectator');
 
   stopTimer();
   clearChat();
