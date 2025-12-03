@@ -485,10 +485,7 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Serve static files
-app.use(express.static('public'));
-
-// Landing page as home
+// Landing page as home (must be before static middleware!)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'landing.html'));
 });
@@ -497,6 +494,9 @@ app.get('/', (req, res) => {
 app.get('/game', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+// Serve static files (after specific routes)
+app.use(express.static('public'));
 
 // Game state management
 const rooms = new Map();
