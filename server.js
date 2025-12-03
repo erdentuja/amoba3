@@ -614,9 +614,9 @@ class GomokuAI {
     switch (difficulty) {
       case 'easy': return 1;      // 🤪 Bugyuta - 1 lépés előre
       case 'medium': return 2;    // 😊 Közepes - 2 lépés előre
-      case 'hard': return 3;      // 😎 Nehéz - 3 lépés előre
-      case 'very-hard': return 4; // 🔥 Nagyon nehéz - 4 lépés előre
-      case 'extreme': return 5;   // 💀 Extrém - Uses MCTS!
+      case 'hard': return 3;      // 😎 Nehéz - 3 lépés (optimalizált heurisztika)
+      case 'very-hard': return 3; // 🔥 Nagyon nehéz - 3 lépés (jobb értékelés)
+      case 'extreme': return 4;   // 💀 Extrém - 4 lépés (legjobb értékelés + alfa-béta)
       default: return 2;
     }
   }
@@ -640,17 +640,19 @@ class GomokuAI {
     return score;
   }
 
-  // Evaluate a single line
+  // Evaluate a single line with OPEN vs CLOSED detection
   evaluateLine(board, boardSize, row, col, dx, dy, aiSymbol, playerSymbol) {
     let aiCount = 0;
     let playerCount = 0;
     let empty = 0;
 
+    // Collect the 5-cell pattern
+    const pattern = [];
     for (let i = 0; i < 5; i++) {
       const r = row + i * dx;
       const c = col + i * dy;
-
       if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) return 0;
+      pattern.push(board[r][c]);
 
       const cell = board[r][c];
       if (cell === aiSymbol) aiCount++;
@@ -658,18 +660,55 @@ class GomokuAI {
       else empty++;
     }
 
-    // Can't make 5 in a row here
+    // Can't make 5 in a row if both players have pieces
     if (aiCount > 0 && playerCount > 0) return 0;
 
-    // Score based on pattern (IMPROVED SCORING)
+    // Check if ends are open (for open/closed threat detection)
+    const beforeR = row - dx;
+    const beforeC = col - dy;
+    const afterR = row + 5 * dx;
+    const afterC = col + 5 * dy;
+
+    const beforeOpen = (beforeR >= 0 && beforeR < boardSize && beforeC >= 0 && beforeC < boardSize && board[beforeR][beforeC] === null);
+    const afterOpen = (afterR >= 0 && afterR < boardSize && afterC >= 0 && afterC < boardSize && board[afterR][afterC] === null);
+
+    const openEnds = (beforeOpen ? 1 : 0) + (afterOpen ? 1 : 0);
+
+    // Score based on pattern - SOPHISTICATED SCORING
     if (aiCount === 5) return 100000;  // Win
     if (playerCount === 5) return -100000;  // Loss
-    if (aiCount === 4 && empty === 1) return 50000;  // 4 in a row (almost win) - INCREASED
-    if (playerCount === 4 && empty === 1) return -40000;  // Block opponent's 4 - MUST BLOCK!
-    if (aiCount === 3 && empty === 2) return 5000;  // 3 in a row - INCREASED
-    if (playerCount === 3 && empty === 2) return -4500;  // Block opponent's 3 - HIGHER PRIORITY
-    if (aiCount === 2 && empty === 3) return 500;  // 2 in a row - INCREASED
-    if (playerCount === 2 && empty === 3) return -450;  // Block opponent's 2
+
+    // Four in a row
+    if (aiCount === 4 && empty === 1) {
+      return openEnds >= 1 ? 50000 : 10000;  // Open four is unstoppable!
+    }
+    if (playerCount === 4 && empty === 1) {
+      return openEnds >= 1 ? -50000 : -10000;  // Must block open four!
+    }
+
+    // Three in a row
+    if (aiCount === 3 && empty === 2) {
+      if (openEnds === 2) return 8000;  // Open three (two ways to make four)
+      if (openEnds === 1) return 3000;  // Semi-open three
+      return 1000;  // Closed three
+    }
+    if (playerCount === 3 && empty === 2) {
+      if (openEnds === 2) return -7000;  // Block open three
+      if (openEnds === 1) return -2500;  // Block semi-open three
+      return -800;  // Closed three less urgent
+    }
+
+    // Two in a row
+    if (aiCount === 2 && empty === 3) {
+      if (openEnds === 2) return 600;  // Open two
+      if (openEnds === 1) return 200;  // Semi-open two
+      return 50;  // Closed two
+    }
+    if (playerCount === 2 && empty === 3) {
+      if (openEnds === 2) return -500;  // Block open two
+      if (openEnds === 1) return -150;  // Block semi-open two
+      return -30;  // Closed two
+    }
 
     return 0;
   }
@@ -755,8 +794,8 @@ class GomokuAI {
       return [[center, center]];
     }
 
-    // Get cells near occupied ones - OPTIMIZED for speed
-    const radius = 1;  // Only check immediate neighbors
+    // Get cells near occupied ones - OPTIMIZED with adaptive radius
+    const radius = 2;  // Check within 2 cells of any piece
     const nearbyMoves = new Set();
     for (const [row, col] of occupied) {
       for (let dr = -radius; dr <= radius; dr++) {
@@ -775,8 +814,8 @@ class GomokuAI {
       moves.push([r, c]);
     });
 
-    // Limit number of moves
-    const maxMoves = 12;  // Reduced further for speed
+    // Limit number of moves based on difficulty
+    const maxMoves = this.difficulty === 'extreme' ? 20 : 15;
     if (moves.length > maxMoves) {
       // Use move ordering for better pruning
       if (useOrdering) {
@@ -874,9 +913,9 @@ class GomokuAI {
     return score;
   }
 
-  // Get best move
+  // Get best move with INSTANT win/block detection
   getBestMove(board, boardSize, aiSymbol, playerSymbol) {
-    const moves = this.getPossibleMoves(board, boardSize);
+    const moves = this.getPossibleMoves(board, boardSize, aiSymbol, playerSymbol, true);
     if (moves.length === 0) return null;
 
     // For easy mode, add some randomness
@@ -884,23 +923,33 @@ class GomokuAI {
       return moves[Math.floor(Math.random() * moves.length)];
     }
 
-    // Use MCTS for extreme difficulty
-    if (this.difficulty === 'extreme') {
-      return this.getBestMoveMCTS(board, boardSize, aiSymbol, playerSymbol, 2000); // 2 second limit
+    // INSTANT WIN/BLOCK DETECTION - Check before minimax!
+    for (const [row, col] of moves) {
+      // Check if this move wins immediately
+      board[row][col] = aiSymbol;
+      if (this.checkWinner(board, boardSize) === aiSymbol) {
+        board[row][col] = null;
+        console.log(`⚡ INSTANT WIN found at [${row},${col}]!`);
+        return [row, col];
+      }
+      board[row][col] = null;
+
+      // Check if we must block opponent's winning move
+      board[row][col] = playerSymbol;
+      if (this.checkWinner(board, boardSize) === playerSymbol) {
+        board[row][col] = null;
+        console.log(`🛡️ BLOCKING opponent win at [${row},${col}]!`);
+        return [row, col];
+      }
+      board[row][col] = null;
     }
 
-    // Use minimax for other difficulties
+    // Use minimax with optimized heuristics
     let bestMove = moves[0];
     let bestValue = -Infinity;
 
-    // Sort moves by immediate value for better alpha-beta pruning
-    const scoredMoves = moves.map(move => ({
-      move,
-      score: this.evaluateMove(board, boardSize, move[0], move[1], aiSymbol)
-    }));
-    scoredMoves.sort((a, b) => b.score - a.score);
-
-    for (const { move } of scoredMoves) {
+    // Moves are already ordered by getPossibleMoves, use them directly
+    for (const move of moves) {
       const [row, col] = move;
       board[row][col] = aiSymbol;
       const moveValue = this.minimax(board, boardSize, this.maxDepth, -Infinity, Infinity, false, aiSymbol, playerSymbol);
@@ -909,6 +958,12 @@ class GomokuAI {
       if (moveValue > bestValue) {
         bestValue = moveValue;
         bestMove = [row, col];
+      }
+
+      // Early exit if we found a winning move
+      if (moveValue >= 50000) {
+        console.log(`🎯 Winning path found! Score: ${moveValue}`);
+        break;
       }
     }
 
