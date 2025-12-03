@@ -3277,6 +3277,7 @@ function showPlayerProfile() {
 }
 
 function displayPlayerProfile(profileData) {
+  console.log('🔍 displayPlayerProfile called with:', profileData);
   const {name, rank, score, stats} = profileData;
 
   // Update profile header
@@ -3286,9 +3287,10 @@ function displayPlayerProfile(profileData) {
 
   // Ensure stats exist
   if (!stats) {
-    console.warn('No stats available for player');
+    console.warn('❌ No stats available for player');
     return;
   }
+  console.log('✅ Stats object:', stats);
 
   // Update overall stats
   document.getElementById('statTotalGames').textContent = stats.totalGames || 0;
