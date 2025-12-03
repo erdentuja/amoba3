@@ -152,9 +152,16 @@ const UserManager = {
     this.users[username] = {
       password: hashedPassword,
       isAdmin: false,
+      isBanned: false,
+      banReason: null,
+      banExpiry: null, // null = permanent, timestamp = temporary
+      email: null,
+      googleId: null,
       rank: 'Újonc',
       score: 0,
       createdAt: new Date().toISOString(),
+      lastLogin: null,
+      activityLog: [], // { timestamp, action, details }
       stats: {
         totalGames: 0,
         wins: 0,
@@ -414,6 +421,178 @@ const UserManager = {
     });
 
     return { registered, guests };
+  },
+
+  // ===== ADMIN OPERATIONS =====
+
+  // Log user activity
+  logActivity(username, action, details = {}) {
+    const user = this.users[username];
+    if (!user) return false;
+
+    if (!user.activityLog) {
+      user.activityLog = [];
+    }
+
+    user.activityLog.push({
+      timestamp: new Date().toISOString(),
+      action,
+      details
+    });
+
+    // Keep only last 100 activities
+    if (user.activityLog.length > 100) {
+      user.activityLog = user.activityLog.slice(-100);
+    }
+
+    return true;
+  },
+
+  // Ban user
+  async banUser(username, reason, durationMinutes = null, adminName) {
+    const user = this.users[username];
+    if (!user) return { success: false, error: 'Felhasználó nem található' };
+    if (user.isAdmin) return { success: false, error: 'Admin felhasználót nem lehet bannolni' };
+
+    user.isBanned = true;
+    user.banReason = reason;
+    user.banExpiry = durationMinutes ? Date.now() + (durationMinutes * 60 * 1000) : null;
+
+    this.logActivity(username, 'banned', {
+      reason,
+      duration: durationMinutes ? `${durationMinutes} perc` : 'végleges',
+      by: adminName
+    });
+
+    await this.save();
+    console.log(`🚫 User banned: ${username} by ${adminName}`);
+    return { success: true, user };
+  },
+
+  // Unban user
+  async unbanUser(username, adminName) {
+    const user = this.users[username];
+    if (!user) return { success: false, error: 'Felhasználó nem található' };
+
+    user.isBanned = false;
+    user.banReason = null;
+    user.banExpiry = null;
+
+    this.logActivity(username, 'unbanned', { by: adminName });
+
+    await this.save();
+    console.log(`✅ User unbanned: ${username} by ${adminName}`);
+    return { success: true, user };
+  },
+
+  // Check if ban expired
+  checkBanExpiry(username) {
+    const user = this.users[username];
+    if (!user || !user.isBanned) return false;
+
+    if (user.banExpiry && Date.now() > user.banExpiry) {
+      // Ban expired, unban automatically
+      user.isBanned = false;
+      user.banReason = null;
+      user.banExpiry = null;
+      this.logActivity(username, 'ban_expired', {});
+      this.save();
+      return true;
+    }
+
+    return false;
+  },
+
+  // Delete user
+  async deleteUser(username, adminName) {
+    if (!this.users[username]) return { success: false, error: 'Felhasználó nem található' };
+    if (this.users[username].isAdmin) return { success: false, error: 'Admin felhasználót nem lehet törölni' };
+
+    delete this.users[username];
+    await this.save();
+    console.log(`🗑️ User deleted: ${username} by ${adminName}`);
+    return { success: true };
+  },
+
+  // Reset password
+  async resetUserPassword(username, newPassword, adminName) {
+    const user = this.users[username];
+    if (!user) return { success: false, error: 'Felhasználó nem található' };
+
+    user.password = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+    this.logActivity(username, 'password_reset', { by: adminName });
+
+    await this.save();
+    console.log(`🔑 Password reset for: ${username} by ${adminName}`);
+    return { success: true };
+  },
+
+  // Toggle admin rights
+  async toggleAdmin(username, adminName) {
+    const user = this.users[username];
+    if (!user) return { success: false, error: 'Felhasználó nem található' };
+
+    user.isAdmin = !user.isAdmin;
+    this.logActivity(username, user.isAdmin ? 'promoted_to_admin' : 'demoted_from_admin', { by: adminName });
+
+    await this.save();
+    console.log(`👑 Admin rights ${user.isAdmin ? 'granted' : 'revoked'} for: ${username} by ${adminName}`);
+    return { success: true, isAdmin: user.isAdmin };
+  },
+
+  // Bulk ban
+  async bulkBan(usernames, reason, durationMinutes, adminName) {
+    const results = { success: [], failed: [] };
+
+    for (const username of usernames) {
+      const result = await this.banUser(username, reason, durationMinutes, adminName);
+      if (result.success) {
+        results.success.push(username);
+      } else {
+        results.failed.push({ username, error: result.error });
+      }
+    }
+
+    console.log(`🚫 Bulk ban: ${results.success.length} banned, ${results.failed.length} failed by ${adminName}`);
+    return results;
+  },
+
+  // Bulk delete
+  async bulkDelete(usernames, adminName) {
+    const results = { success: [], failed: [] };
+
+    for (const username of usernames) {
+      const result = await this.deleteUser(username, adminName);
+      if (result.success) {
+        results.success.push(username);
+      } else {
+        results.failed.push({ username, error: result.error });
+      }
+    }
+
+    console.log(`🗑️ Bulk delete: ${results.success.length} deleted, ${results.failed.length} failed by ${adminName}`);
+    return results;
+  },
+
+  // Get user details with activity log
+  getUserDetails(username) {
+    const user = this.users[username];
+    if (!user) return null;
+
+    return {
+      username,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      isBanned: user.isBanned,
+      banReason: user.banReason,
+      banExpiry: user.banExpiry,
+      rank: user.rank,
+      score: user.score,
+      createdAt: user.createdAt,
+      lastLogin: user.lastLogin,
+      stats: user.stats,
+      activityLog: user.activityLog || []
+    };
   }
 };
 
@@ -2894,6 +3073,224 @@ io.on('connection', (socket) => {
     });
 
     console.log('AI settings updated:', globalAISettings);
+  });
+
+  // ===== USER MANAGEMENT ADMIN ENDPOINTS =====
+
+  // Admin: Get all users
+  socket.on('adminGetAllUsers', () => {
+    const client = connectedClients.get(socket.id);
+    if (!client || !client.isAdmin) {
+      socket.emit('error', 'Unauthorized');
+      return;
+    }
+
+    const allUsers = Object.keys(UserManager.users).map(username => {
+      const user = UserManager.users[username];
+      return {
+        username,
+        email: user.email,
+        rank: user.rank,
+        score: user.score,
+        isAdmin: user.isAdmin,
+        isBanned: user.isBanned,
+        banReason: user.banReason,
+        banExpiry: user.banExpiry,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin,
+        stats: user.stats
+      };
+    });
+
+    socket.emit('allUsers', allUsers);
+  });
+
+  // Admin: Get user details
+  socket.on('adminGetUserDetails', ({ username }) => {
+    const client = connectedClients.get(socket.id);
+    if (!client || !client.isAdmin) {
+      socket.emit('error', 'Unauthorized');
+      return;
+    }
+
+    const userDetails = UserManager.getUserDetails(username);
+    if (userDetails) {
+      socket.emit('userDetails', userDetails);
+    } else {
+      socket.emit('error', 'Felhasználó nem található');
+    }
+  });
+
+  // Admin: Ban user
+  socket.on('adminBanUser', async ({ username, reason, durationMinutes }) => {
+    const client = connectedClients.get(socket.id);
+    if (!client || !client.isAdmin) {
+      socket.emit('error', 'Unauthorized');
+      return;
+    }
+
+    const result = await UserManager.banUser(username, reason, durationMinutes, client.name);
+
+    if (result.success) {
+      // Kick the banned user if they're online
+      connectedClients.forEach((c, sid) => {
+        if (c.name === username) {
+          io.to(sid).emit('banned', { reason, expiry: result.user.banExpiry });
+          const targetSocket = io.sockets.sockets.get(sid);
+          if (targetSocket) {
+            targetSocket.disconnect(true);
+          }
+        }
+      });
+
+      socket.emit('adminActionSuccess', { action: 'ban', username });
+      broadcastOnlinePlayers();
+    } else {
+      socket.emit('error', result.error);
+    }
+  });
+
+  // Admin: Unban user
+  socket.on('adminUnbanUser', async ({ username }) => {
+    const client = connectedClients.get(socket.id);
+    if (!client || !client.isAdmin) {
+      socket.emit('error', 'Unauthorized');
+      return;
+    }
+
+    const result = await UserManager.unbanUser(username, client.name);
+
+    if (result.success) {
+      socket.emit('adminActionSuccess', { action: 'unban', username });
+    } else {
+      socket.emit('error', result.error);
+    }
+  });
+
+  // Admin: Delete user
+  socket.on('adminDeleteUser', async ({ username }) => {
+    const client = connectedClients.get(socket.id);
+    if (!client || !client.isAdmin) {
+      socket.emit('error', 'Unauthorized');
+      return;
+    }
+
+    const result = await UserManager.deleteUser(username, client.name);
+
+    if (result.success) {
+      // Kick the user if they're online
+      connectedClients.forEach((c, sid) => {
+        if (c.name === username) {
+          io.to(sid).emit('accountDeleted', {});
+          const targetSocket = io.sockets.sockets.get(sid);
+          if (targetSocket) {
+            targetSocket.disconnect(true);
+          }
+        }
+      });
+
+      socket.emit('adminActionSuccess', { action: 'delete', username });
+      broadcastOnlinePlayers();
+    } else {
+      socket.emit('error', result.error);
+    }
+  });
+
+  // Admin: Reset user password
+  socket.on('adminResetPassword', async ({ username, newPassword }) => {
+    const client = connectedClients.get(socket.id);
+    if (!client || !client.isAdmin) {
+      socket.emit('error', 'Unauthorized');
+      return;
+    }
+
+    const result = await UserManager.resetUserPassword(username, newPassword, client.name);
+
+    if (result.success) {
+      socket.emit('adminActionSuccess', { action: 'reset_password', username });
+    } else {
+      socket.emit('error', result.error);
+    }
+  });
+
+  // Admin: Toggle admin rights
+  socket.on('adminToggleAdmin', async ({ username }) => {
+    const client = connectedClients.get(socket.id);
+    if (!client || !client.isAdmin) {
+      socket.emit('error', 'Unauthorized');
+      return;
+    }
+
+    const result = await UserManager.toggleAdmin(username, client.name);
+
+    if (result.success) {
+      // Update connected client if online
+      connectedClients.forEach((c, sid) => {
+        if (c.name === username) {
+          c.isAdmin = result.isAdmin;
+          io.to(sid).emit('adminRightsChanged', { isAdmin: result.isAdmin });
+        }
+      });
+
+      socket.emit('adminActionSuccess', { action: 'toggle_admin', username, isAdmin: result.isAdmin });
+      broadcastOnlinePlayers();
+    } else {
+      socket.emit('error', result.error);
+    }
+  });
+
+  // Admin: Bulk ban users
+  socket.on('adminBulkBan', async ({ usernames, reason, durationMinutes }) => {
+    const client = connectedClients.get(socket.id);
+    if (!client || !client.isAdmin) {
+      socket.emit('error', 'Unauthorized');
+      return;
+    }
+
+    const results = await UserManager.bulkBan(usernames, reason, durationMinutes, client.name);
+
+    // Kick all banned users
+    results.success.forEach(username => {
+      connectedClients.forEach((c, sid) => {
+        if (c.name === username) {
+          io.to(sid).emit('banned', { reason, expiry: durationMinutes ? Date.now() + (durationMinutes * 60 * 1000) : null });
+          const targetSocket = io.sockets.sockets.get(sid);
+          if (targetSocket) {
+            targetSocket.disconnect(true);
+          }
+        }
+      });
+    });
+
+    socket.emit('bulkActionResult', { action: 'ban', ...results });
+    broadcastOnlinePlayers();
+  });
+
+  // Admin: Bulk delete users
+  socket.on('adminBulkDelete', async ({ usernames }) => {
+    const client = connectedClients.get(socket.id);
+    if (!client || !client.isAdmin) {
+      socket.emit('error', 'Unauthorized');
+      return;
+    }
+
+    const results = await UserManager.bulkDelete(usernames, client.name);
+
+    // Kick all deleted users
+    results.success.forEach(username => {
+      connectedClients.forEach((c, sid) => {
+        if (c.name === username) {
+          io.to(sid).emit('accountDeleted', {});
+          const targetSocket = io.sockets.sockets.get(sid);
+          if (targetSocket) {
+            targetSocket.disconnect(true);
+          }
+        }
+      });
+    });
+
+    socket.emit('bulkActionResult', { action: 'delete', ...results });
+    broadcastOnlinePlayers();
   });
 
   // Admin: Clear statistics

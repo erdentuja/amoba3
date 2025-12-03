@@ -3482,3 +3482,485 @@ socket.on('profileError', (error) => {
   alert('Hiba a profil betöltésekor: ' + error);
 });
 
+
+// ===== USER MANAGEMENT ADMIN FUNCTIONS =====
+
+let selectedUsers = new Set();
+let allUsers = [];
+
+// Load users into admin table
+function loadUsersTable() {
+  if (!socket || !isAdmin) return;
+
+  // Request all online players which includes user data
+  const onlinePlayers = [];
+
+  // Get all users from the online players list
+  document.querySelectorAll('.online-player').forEach(el => {
+    const username = el.textContent.trim().split(' ')[0];
+    if (username) onlinePlayers.push(username);
+  });
+
+  // For now, render from UserManager (need to add socket endpoint)
+  // We'll populate with mock data for testing
+  const mockUsers = [
+    {
+      username: 'András',
+      email: 'andras@example.com',
+      rank: 'Főadmin',
+      score: 100,
+      isAdmin: true,
+      isBanned: false,
+      createdAt: new Date().toISOString(),
+      stats: { totalGames: 10, wins: 8, losses: 2, winRate: 80 }
+    }
+  ];
+
+  renderUsersTable(mockUsers);
+}
+
+// Render users table
+function renderUsersTable(users) {
+  allUsers = users;
+  const tbody = document.getElementById('userTableBody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  users.forEach(user => {
+    const tr = document.createElement('tr');
+
+    const isOnline = Array.from(document.querySelectorAll('.online-player')).some(el =>
+      el.textContent.includes(user.username)
+    );
+
+    const username = user.username.replace(/'/g, "\\'");
+
+    tr.innerHTML = `
+      <td><input type="checkbox" class="user-checkbox" data-username="${username}"></td>
+      <td><strong>${user.username}</strong></td>
+      <td>${user.email || '-'}</td>
+      <td>${user.rank || 'Újonc'}</td>
+      <td>${user.score || 0}</td>
+      <td>
+        ${user.isBanned ? '<span class="user-status status-banned">🚫 Bannolva</span>' : ''}
+        ${user.isAdmin ? '<span class="user-status status-admin">👑 Admin</span>' : ''}
+        ${isOnline ? '<span class="user-status status-online">🟢 Online</span>' : '<span class="user-status status-offline">⚫ Offline</span>'}
+      </td>
+      <td class="user-actions">
+        <button class="btn btn-info btn-sm" onclick="viewUserDetails('${username}')">👁️ Részletek</button>
+        ${!user.isBanned ?
+          `<button class="btn btn-warning btn-sm" onclick="openBanModal('${username}')">🚫 Ban</button>` :
+          `<button class="btn btn-success btn-sm" onclick="unbanUser('${username}')">✅ Unban</button>`
+        }
+        <button class="btn btn-primary btn-sm" onclick="openResetPasswordModal('${username}')">🔑 Jelszó</button>
+        <button class="btn btn-${user.isAdmin ? 'warning' : 'success'} btn-sm" onclick="toggleUserAdmin('${username}')">
+          ${user.isAdmin ? '👤 Admin elvétele' : '👑 Admin adása'}
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="deleteUser('${username}')">🗑️ Törlés</button>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+
+  // Attach checkbox event listeners
+  document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', handleUserCheckbox);
+  });
+}
+
+// Handle individual checkbox
+function handleUserCheckbox(event) {
+  const username = event.target.dataset.username;
+
+  if (event.target.checked) {
+    selectedUsers.add(username);
+  } else {
+    selectedUsers.delete(username);
+  }
+
+  updateBulkActionsBar();
+}
+
+// Handle select all checkbox
+const selectAllCheckbox = document.getElementById('selectAllUsers');
+if (selectAllCheckbox) {
+  selectAllCheckbox.addEventListener('change', (event) => {
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = event.target.checked;
+      const username = checkbox.dataset.username;
+
+      if (event.target.checked) {
+        selectedUsers.add(username);
+      } else {
+        selectedUsers.delete(username);
+      }
+    });
+
+    updateBulkActionsBar();
+  });
+}
+
+// Update bulk actions bar visibility and count
+function updateBulkActionsBar() {
+  const bulkActionsBar = document.getElementById('bulkActionsBar');
+  const selectedCount = document.getElementById('selectedCount');
+
+  if (selectedUsers.size > 0) {
+    bulkActionsBar.style.display = 'flex';
+    selectedCount.textContent = `${selectedUsers.size} kiválasztva`;
+  } else {
+    bulkActionsBar.style.display = 'none';
+  }
+}
+
+// Deselect all
+const deselectAllBtn = document.getElementById('deselectAllBtn');
+if (deselectAllBtn) {
+  deselectAllBtn.addEventListener('click', () => {
+    selectedUsers.clear();
+    document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
+    if (selectAllCheckbox) selectAllCheckbox.checked = false;
+    updateBulkActionsBar();
+  });
+}
+
+// View user details
+function viewUserDetails(username) {
+  if (!socket) return;
+  socket.emit('adminGetUserDetails', { username });
+}
+
+// Display user details modal
+function displayUserDetails(userDetails) {
+  const modal = document.getElementById('userDetailsModal');
+  const content = document.getElementById('userDetailsContent');
+
+  if (!modal || !content) return;
+
+  const activityLog = userDetails.activityLog || [];
+  const stats = userDetails.stats || {};
+
+  content.innerHTML = `
+    <div class="user-details-section">
+      <h3>📋 Alapadatok</h3>
+      <div class="detail-row">
+        <span class="detail-label">Felhasználónév:</span>
+        <span class="detail-value"><strong>${userDetails.username}</strong></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Email:</span>
+        <span class="detail-value">${userDetails.email || '-'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Rang:</span>
+        <span class="detail-value">${userDetails.rank || 'Újonc'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Pontszám:</span>
+        <span class="detail-value">${userDetails.score || 0}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Regisztráció:</span>
+        <span class="detail-value">${userDetails.createdAt ? new Date(userDetails.createdAt).toLocaleString('hu-HU') : '-'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Utolsó belépés:</span>
+        <span class="detail-value">${userDetails.lastLogin ? new Date(userDetails.lastLogin).toLocaleString('hu-HU') : 'Soha'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Admin:</span>
+        <span class="detail-value">${userDetails.isAdmin ? '✅ Igen' : '❌ Nem'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Bannolva:</span>
+        <span class="detail-value">${userDetails.isBanned ? '🚫 Igen' : '✅ Nem'}</span>
+      </div>
+      ${userDetails.isBanned ? `
+        <div class="detail-row">
+          <span class="detail-label">Ban indoka:</span>
+          <span class="detail-value">${userDetails.banReason || '-'}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Ban lejár:</span>
+          <span class="detail-value">${userDetails.banExpiry ? new Date(userDetails.banExpiry).toLocaleString('hu-HU') : 'Végleges'}</span>
+        </div>
+      ` : ''}
+    </div>
+
+    <div class="user-details-section">
+      <h3>📊 Statisztikák</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value">${stats.totalGames || 0}</div>
+          <div class="stat-label">Játékok</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${stats.wins || 0}</div>
+          <div class="stat-label">Győzelmek</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${stats.losses || 0}</div>
+          <div class="stat-label">Vereségek</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${stats.winRate || 0}%</div>
+          <div class="stat-label">Nyerési arány</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${stats.longestWinStreak || 0}</div>
+          <div class="stat-label">Legjobb sorozat</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${stats.fastestWin || '-'}</div>
+          <div class="stat-label">Leggyorsabb győzelem</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="user-details-section">
+      <h3>📝 Aktivitási napló (utolsó 20)</h3>
+      ${activityLog.length === 0 ? '<p style="color: #999;">Nincs aktivitás</p>' : ''}
+      ${activityLog.slice(-20).reverse().map(entry => `
+        <div class="activity-log-entry action-${entry.action}">
+          <div class="activity-timestamp">${new Date(entry.timestamp).toLocaleString('hu-HU')}</div>
+          <div class="activity-action">${translateAction(entry.action)}</div>
+          <div class="activity-details">${JSON.stringify(entry.details, null, 2)}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+}
+
+function closeUserDetailsModal() {
+  const modal = document.getElementById('userDetailsModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// Translate action names to Hungarian
+function translateAction(action) {
+  const translations = {
+    'banned': '🚫 Bannolva',
+    'unbanned': '✅ Ban feloldva',
+    'password_reset': '🔑 Jelszó visszaállítva',
+    'promoted_to_admin': '👑 Admin jogok megadva',
+    'demoted_from_admin': '👤 Admin jogok elvéve',
+    'ban_expired': '⏰ Ban lejárt',
+    'login': '🔐 Belépés',
+    'logout': '🚪 Kilépés',
+    'game_won': '🏆 Játék megnyerve',
+    'game_lost': '😞 Játék elvesztve'
+  };
+  return translations[action] || action;
+}
+
+// Ban user modal
+let currentBanUsername = '';
+
+function openBanModal(username) {
+  currentBanUsername = username;
+  document.getElementById('banUsername').textContent = username;
+  document.getElementById('banReason').value = '';
+  document.getElementById('banDuration').value = '';
+  document.getElementById('banUserModal').style.display = 'flex';
+}
+
+function closeBanModal() {
+  document.getElementById('banUserModal').style.display = 'none';
+  currentBanUsername = '';
+}
+
+const confirmBanBtn = document.getElementById('confirmBanBtn');
+if (confirmBanBtn) {
+  confirmBanBtn.addEventListener('click', () => {
+    const reason = document.getElementById('banReason').value.trim();
+    const duration = document.getElementById('banDuration').value;
+
+    if (!reason) {
+      alert('Kérlek add meg a ban indokát!');
+      return;
+    }
+
+    const durationMinutes = duration ? parseInt(duration) : null;
+
+    if (socket) {
+      socket.emit('adminBanUser', {
+        username: currentBanUsername,
+        reason,
+        durationMinutes
+      });
+    }
+
+    closeBanModal();
+  });
+}
+
+// Unban user
+function unbanUser(username) {
+  if (!confirm(`Biztosan feloldod ${username} banját?`)) return;
+
+  if (socket) {
+    socket.emit('adminUnbanUser', { username });
+  }
+}
+
+// Delete user
+function deleteUser(username) {
+  if (!confirm(`FIGYELEM! Biztosan TÖRÖLNI szeretnéd ${username} felhasználót? Ez a művelet NEM VISSZAVONHATÓ!`)) return;
+
+  if (socket) {
+    socket.emit('adminDeleteUser', { username });
+  }
+}
+
+// Reset password modal
+let currentResetPasswordUsername = '';
+
+function openResetPasswordModal(username) {
+  currentResetPasswordUsername = username;
+  document.getElementById('resetPasswordUsername').textContent = username;
+  document.getElementById('newUserPassword').value = '';
+  document.getElementById('resetPasswordModal').style.display = 'flex';
+}
+
+function closeResetPasswordModal() {
+  document.getElementById('resetPasswordModal').style.display = 'none';
+  currentResetPasswordUsername = '';
+}
+
+const confirmResetPasswordBtn = document.getElementById('confirmResetPasswordBtn');
+if (confirmResetPasswordBtn) {
+  confirmResetPasswordBtn.addEventListener('click', () => {
+    const newPassword = document.getElementById('newUserPassword').value;
+
+    if (!newPassword || newPassword.length < 4) {
+      alert('A jelszónak legalább 4 karakter hosszúnak kell lennie!');
+      return;
+    }
+
+    if (socket) {
+      socket.emit('adminResetPassword', {
+        username: currentResetPasswordUsername,
+        newPassword
+      });
+    }
+
+    closeResetPasswordModal();
+  });
+}
+
+// Toggle admin rights
+function toggleUserAdmin(username) {
+  if (!confirm(`Biztosan módosítod ${username} admin jogosultságait?`)) return;
+
+  if (socket) {
+    socket.emit('adminToggleAdmin', { username });
+  }
+}
+
+// Bulk ban
+const bulkBanBtn = document.getElementById('bulkBanBtn');
+if (bulkBanBtn) {
+  bulkBanBtn.addEventListener('click', () => {
+    const reason = prompt('Add meg a ban indokát:');
+    if (!reason) return;
+
+    const duration = prompt('Időtartam percben (hagyd üresen a véglegeshez):');
+    const durationMinutes = duration ? parseInt(duration) : null;
+
+    const usernames = Array.from(selectedUsers);
+
+    if (socket) {
+      socket.emit('adminBulkBan', {
+        usernames,
+        reason,
+        durationMinutes
+      });
+    }
+
+    selectedUsers.clear();
+    document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
+    if (selectAllCheckbox) selectAllCheckbox.checked = false;
+    updateBulkActionsBar();
+  });
+}
+
+// Bulk delete
+const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+if (bulkDeleteBtn) {
+  bulkDeleteBtn.addEventListener('click', () => {
+    const usernames = Array.from(selectedUsers);
+
+    if (!confirm(`FIGYELEM! Biztosan TÖRÖLNI szeretnéd a következő ${usernames.length} felhasználót?\n\n${usernames.join(', ')}\n\nEz a művelet NEM VISSZAVONHATÓ!`)) return;
+
+    if (socket) {
+      socket.emit('adminBulkDelete', { usernames });
+    }
+
+    selectedUsers.clear();
+    document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
+    if (selectAllCheckbox) selectAllCheckbox.checked = false;
+    updateBulkActionsBar();
+  });
+}
+
+// Socket.IO listeners for admin responses
+if (socket) {
+  socket.on('userDetails', (userDetails) => {
+    displayUserDetails(userDetails);
+  });
+
+  socket.on('adminActionSuccess', (data) => {
+    alert(`✅ Művelet sikeres: ${data.action} - ${data.username}`);
+    loadUsersTable(); // Reload table
+  });
+
+  socket.on('bulkActionResult', (results) => {
+    alert(`✅ Bulk művelet eredménye:\n\nSikeres: ${results.success.length}\nSikertelen: ${results.failed.length}`);
+    loadUsersTable(); // Reload table
+  });
+
+  socket.on('banned', (data) => {
+    alert(`🚫 Bannolva lettél!\n\nIndok: ${data.reason}\n\nLejárat: ${data.expiry ? new Date(data.expiry).toLocaleString('hu-HU') : 'Végleges'}`);
+    window.location.reload();
+  });
+
+  socket.on('accountDeleted', () => {
+    alert('⚠️ A fiókod törölve lett az admin által!');
+    localStorage.clear();
+    window.location.reload();
+  });
+
+  socket.on('adminRightsChanged', (data) => {
+    alert(`${data.isAdmin ? '👑 Admin jogokat kaptál!' : '👤 Admin jogokat elvesztettél!'}`);
+    window.location.reload();
+  });
+}
+
+// Load users table when admin panel opens
+const adminPanel = document.getElementById('adminPanel');
+if (adminPanel) {
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+        if (adminPanel.style.display !== 'none' && isAdmin) {
+          loadUsersTable();
+        }
+      }
+    });
+  });
+
+  observer.observe(adminPanel, { attributes: true });
+}
+
+// Socket listener for all users response
+if (socket) {
+  socket.on('allUsers', (users) => {
+    renderUsersTable(users);
+  });
+}

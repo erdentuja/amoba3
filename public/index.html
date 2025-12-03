@@ -248,18 +248,96 @@
           </div>
         </div>
         <div class="admin-section">
-          <h3>👥 Regisztrált Felhasználók</h3>
-          <div id="registeredUsersList" class="admin-list"></div>
+          <h3>👥 Felhasználókezelés</h3>
+
+          <!-- Bulk Actions Bar -->
+          <div id="bulkActionsBar" class="bulk-actions-bar" style="display: none;">
+            <span id="selectedCount" class="selected-count">0 kiválasztva</span>
+            <button id="bulkBanBtn" class="btn btn-warning btn-sm">🚫 Bulk Ban</button>
+            <button id="bulkDeleteBtn" class="btn btn-danger btn-sm">🗑️ Bulk Törlés</button>
+            <button id="deselectAllBtn" class="btn btn-secondary btn-sm">✖ Kijelölés megszüntetése</button>
+          </div>
+
+          <!-- User Management Table -->
+          <div class="user-table-container">
+            <table id="userManagementTable" class="user-table">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="selectAllUsers"></th>
+                  <th>Felhasználónév</th>
+                  <th>Email</th>
+                  <th>Rang</th>
+                  <th>Pontszám</th>
+                  <th>Státusz</th>
+                  <th>Műveletek</th>
+                </tr>
+              </thead>
+              <tbody id="userTableBody">
+                <!-- Users will be inserted here -->
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div class="admin-section">
-          <h3>👤 Vendégek</h3>
-          <div id="guestUsersList" class="admin-list"></div>
-        </div>
+
         <div class="admin-section">
           <h3>Aktív Szobák (<span id="roomsCount">0</span>)</h3>
           <div id="adminRoomsList" class="admin-list"></div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div id="userDetailsModal" class="modal" style="display: none;">
+      <div class="modal-content modal-large">
+        <span class="modal-close" onclick="closeUserDetailsModal()">&times;</span>
+        <h2>👤 Felhasználó Részletek</h2>
+        <div id="userDetailsContent">
+          <!-- Details will be inserted here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- User Action Modals -->
+    <div id="banUserModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="modal-close" onclick="closeBanModal()">&times;</span>
+        <h2>🚫 Felhasználó Bannolása</h2>
+        <div class="form-group">
+          <label>Felhasználó: <strong id="banUsername"></strong></label>
+        </div>
+        <div class="form-group">
+          <label for="banReason">Indok:</label>
+          <input type="text" id="banReason" class="form-control" placeholder="pl. Szabályzat megsértése" required>
+        </div>
+        <div class="form-group">
+          <label for="banDuration">Időtartam:</label>
+          <select id="banDuration" class="form-control">
+            <option value="">Végleges</option>
+            <option value="60">1 óra</option>
+            <option value="1440">1 nap</option>
+            <option value="10080">1 hét</option>
+            <option value="43200">30 nap</option>
+          </select>
+        </div>
+        <button id="confirmBanBtn" class="btn btn-danger">Bannolás</button>
+        <button onclick="closeBanModal()" class="btn btn-secondary">Mégse</button>
+      </div>
+    </div>
+
+    <div id="resetPasswordModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="modal-close" onclick="closeResetPasswordModal()">&times;</span>
+        <h2>🔑 Jelszó Visszaállítása</h2>
+        <div class="form-group">
+          <label>Felhasználó: <strong id="resetPasswordUsername"></strong></label>
+        </div>
+        <div class="form-group">
+          <label for="newUserPassword">Új jelszó:</label>
+          <input type="password" id="newUserPassword" class="form-control" placeholder="Új jelszó" required>
+        </div>
+        <button id="confirmResetPasswordBtn" class="btn btn-primary">Jelszó Visszaállítása</button>
+        <button onclick="closeResetPasswordModal()" class="btn btn-secondary">Mégse</button>
       </div>
     </div>
 
