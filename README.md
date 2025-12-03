@@ -1,83 +1,219 @@
-# Amőba Online (Gomoku)
+# 🎮 Amőba Online (Gomoku)
 
-Online multiplayer amőba játék valós idejű kapcsolattal.
+Modern, teljes funkcionalitású online amőba játék valós idejű kapcsolattal, haladó AI ellenfél opcióval.
 
-## Funkciók
+## ✨ Főbb Funkciók
 
-- 15x15-ös játéktábla
-- Valós idejű multiplayer Socket.IO használatával
-- Szoba-alapú játék (több játékos különböző szobákban)
-- Automatikus győzelem detektálás (5 egy sorban)
-- Döntetlen kezelés
-- Reszponzív design
-- Szép, modern felhasználói felület
+### 🎯 Játékmódok
+- **👥 PvP** - Játékos vs Játékos (multiplayer)
+- **🤖 AI Ellenfél** - 5 nehézségi szint (Bugyuta → Extrém)
+- **🤖⚔️🤖 AI vs AI** - Bemutató mód (két AI küzd egymással)
+- **👁️ Nézői mód** - Folyamatban lévő meccsek megtekintése
 
-## Telepítés
+### 🧠 Haladó AI Rendszer
+- **Optimalizált heurisztikák** - Nyitott/zárt minták felismerése
+- **Alfa-béta vágás** - Hatékony fakeresés
+- **Instant win/block** - Azonnali válasz kritikus helyzetekben
+- **Move ordering** - Okos lépés-prioritizálás
+- **5 nehézségi szint**: Bugyuta (1) → Extrém (4 mélység)
 
-1. Telepítsd a függőségeket:
+### 💬 Kommunikáció
+- **Játékon belüli chat** - Játékosok és nézők beszélgetnek
+- **Lobby chat** - Közösségi beszélgetés a lobbiban
+- **🤖 Balambér chatbot** - Automatikus szórakoztató üzenetek
+
+### 🎮 Játék Funkciók
+- **Dinamikus táblaméretek**: 9×9, 13×13, 15×15, 19×19
+- **Undo lépés** - Utolsó lépés visszavonása
+- **Timer rendszer** - Opcionális időkorlát (admin által állítható)
+- **🔊 Hangeffektek** - Web Audio API alapú hangok
+- **Győzelmi animáció** - Konfetti effekt + új játék kérés
+- **Automatikus újracsatlakozás** - F5 frissítés után folytatható a játék
+
+### 👨‍💼 Admin Rendszer
+- **Jelszóval védett admin panel**
+- **Felhasználó kezelés** - Kirúgás, szobák bezárása
+- **Globális beállítások** - Timer, AI vs AI mód
+- **Online játékosok** - Valós idejű listázás
+- **Statisztikák** - Játékos teljesítmények nyomon követése
+
+### 📊 Felhasználó Rendszer
+- **Regisztráció/Belépés** - bcrypt titkosított jelszavak
+- **Vendég mód** - Játék regisztráció nélkül
+- **Rangrendszer**: Újonc → Haladó → Mester → Nagymester
+- **Pontrendszer** - Győzelmek/vereségek alapján
+- **Statisztikák**: W/L arány, win streak, leggyorsabb győzelem, stb.
+
+## 🚀 Gyors Indítás
+
+### Telepítés
 ```bash
 npm install
 ```
 
-## Futtatás
-
-### Fejlesztői mód (automatikus újraindítással):
+### Futtatás
 ```bash
+# Fejlesztői mód (auto-reload)
 npm run dev
-```
 
-### Produkciós mód:
-```bash
+# Produkciós mód
 npm start
+
+# Docker
+docker-compose up -d
 ```
 
-A szerver alapértelmezetten a `http://localhost:3000` címen indul el.
+**Szerver cím**: `http://localhost:9000` (vagy saját `PORT` környezeti változó)
 
-## Hogyan játsszunk?
+## 🎮 Használat
 
-1. Nyisd meg a böngészőt és látogasd meg a `http://localhost:3000` címet
-2. Add meg a neved
-3. Adj meg egy szoba azonosítót (pl: "room1")
-4. Oszd meg a szoba azonosítót egy baráttal
-5. A barátod ugyanazzal a szoba azonosítóval csatlakozzon
-6. A játék automatikusan elindul, amikor mindkét játékos csatlakozott
-7. X (fekete) kezd
-8. Kattints a táblára egy bábu elhelyezéséhez
-9. Az nyer, aki először tesz 5-öt egy sorba (vízszintesen, függőlegesen vagy átlósan)
+### Játékosként
+1. **Belépés/Regisztráció** - Név megadása, opcionális jelszó
+2. **Szoba létrehozása** - Válaszd ki a táblaméretet és játékmódot
+3. **Játék indítása** - Automatikus, amikor 2 játékos csatlakozott
+4. **Célkövetés**: 5 egy sorban (vízszintes/függőleges/átlós)
 
-## Technológiák
+### Nézőként
+- Kattints a **"Megnézem"** gombra egy aktív meccsnél
+- Valós idejű követés, chat hozzáférés
 
-- **Backend**: Node.js, Express, Socket.IO
-- **Frontend**: HTML5, CSS3, Vanilla JavaScript
-- **Kommunikáció**: WebSocket (Socket.IO)
+### Admin
+- Admin bejelentkezés a **⚙️** ikonnal
+- Jelszó: `ADMIN_CODE` környezeti változó (alapért: `admin123`)
+- **⚠️ FONTOS**: Változtasd meg produkciós környezetben!
 
-## Projekt struktúra
+## 🛠️ Technológiák
+
+- **Backend**: Node.js 20, Express, Socket.IO
+- **Frontend**: Vanilla JS, HTML5 Canvas, CSS3
+- **Biztonság**: bcrypt, helmet, rate limiting
+- **Deploy**: Docker, Docker Compose
+- **Valós idejű**: WebSocket (Socket.IO)
+- **Hang**: Web Audio API (procedurálisan generált)
+
+## 📁 Projekt Struktúra
 
 ```
-amoba2/
-├── server.js           # Backend szerver és játék logika
-├── package.json        # Projekt konfiguráció
-├── public/
-│   ├── index.html     # Főoldal
-│   ├── style.css      # Stílusok
-│   └── game.js        # Client-side játék logika
-└── README.md          # Dokumentáció
+amoba3/
+├── server.js              # Backend: Socket.IO, AI, GameRoom logika
+├── package.json           # Függőségek, scriptek
+├── Dockerfile             # Docker image konfiguráció
+├── docker-compose.yml     # Orchestration
+├── data/                  # Adatok (users, stats, chat-history)
+│   ├── users.json
+│   ├── stats.json
+│   └── chat-history.json
+└── public/               # Static frontend
+    ├── index.html        # UI struktúra
+    ├── style.css         # Responsive design
+    └── game.js           # Client-side logika, Canvas rendering
 ```
 
-## Játékszabályok
+## 🎲 AI Részletek
 
-- A játékosok felváltva tesznek bábut a táblára
-- X (fekete) mindig kezd
-- Az nyer, aki először tesz 5 egymás melletti bábut egy sorba
-- A 5 bábu lehet vízszintes, függőleges vagy átlós sorban
-- Ha a tábla megtelik győztes nélkül, a játék döntetlennel ér véget
+### Algoritmus
+- **Minimax** alfa-béta vágással (depth 1-4)
+- **Heurisztikus értékelés**: Nyitott/zárt minták
+- **Move ordering**: Legjobb lépések előre (hatékonyabb pruning)
+- **Instant win/block**: Kritikus lépések azonnal detektálva
 
-## Fejlesztési lehetőségek
+### Nehézségi Szintek
+| Szint | Mélység | Jellemzők |
+|-------|---------|-----------|
+| 🤪 **Bugyuta** | 1 | 40% random lépés |
+| 😊 **Közepes** | 2 | Alapvető előrelátás |
+| 😎 **Nehéz** | 3 | Okos heurisztikák |
+| 🔥 **Nagyon Nehéz** | 3 | Jobb értékelés |
+| 💀 **Extrém** | 4 | Legjobb értékelés + alfa-béta |
 
-- [ ] Chat funkció a játékosok között
-- [ ] Játék történet (replay)
-- [ ] Időlimit a lépésekhez
-- [ ] Ranglétra/statisztika
-- [ ] Több táblméret opció
-- [ ] Mobilos optimalizálás
-- [ ] Játék mentés és betöltés
+### Értékelési Súlyok
+- **Nyitott négyes**: 50,000 (megállíthatatlan!)
+- **Zárt négyes**: 10,000
+- **Nyitott hármas**: 8,000 (két irányból építhető)
+- **Félig-nyitott hármas**: 3,000
+- **Zárt hármas**: 1,000
+
+## 🌍 Környezeti Változók
+
+```bash
+PORT=9000                    # Szerver port
+ADMIN_CODE=admin123          # Admin jelszó (VÁLTOZTASD MEG!)
+NODE_ENV=production          # Environment mode
+BCRYPT_ROUNDS=10             # Jelszó hash erőssége
+```
+
+## 🐋 Docker Deploy
+
+```bash
+# Build és indítás
+docker-compose up -d
+
+# Logok megtekintése
+docker logs -f amoba-online
+
+# Leállítás
+docker-compose down
+```
+
+## 📊 Játékszabályok
+
+- ⚫ **X (fekete)** mindig kezd
+- 🔴 **O (piros)** következik
+- 🎯 **Cél**: 5 egy sorban (↔️ ↕️ ↗️ ↘️)
+- ⏱️ **Timer**: Opcionális (admin által állítható)
+- ↩️ **Undo**: Utolsó lépés visszavonható
+- 🏆 **Győzelem**: Automatikus detektálás + animáció
+
+## 🚧 Jövőbeli Funkciók
+
+- [ ] Játék replay rendszer (mozgás visszajátszás)
+- [ ] Tournament/verseny mód
+- [ ] Privát szobák jelszóval
+- [ ] Barátlista és meghívók
+- [ ] ELO rating rendszer
+- [ ] Achievement/trophy rendszer
+- [ ] Mobil optimalizálás (touch events)
+- [ ] PWA support (offline játék)
+
+## 📝 Fejlesztés
+
+### Lokális Tesztelés
+```bash
+# Fejlesztői szerver indítása
+npm run dev
+
+# Több böngésző ablak/tab megnyitása a teszteléshez
+# → http://localhost:9000
+```
+
+### Tesztelési Forgatókönyvek
+- ✅ 2 játékos ugyanabban a szobában
+- ✅ AI ellenfél (mindegyik nehézségi szint)
+- ✅ AI vs AI automatikus játék
+- ✅ Nézői mód (csatlakozás aktív meccshez)
+- ✅ Chat (játékon belüli és lobby)
+- ✅ Timer lejárat
+- ✅ Undo lépés
+- ✅ F5 frissítés (auto-rejoin)
+- ✅ Admin funkciók (kirúgás, bezárás)
+
+## 🤝 Közreműködés
+
+Hozzájárulásokat szívesen fogadunk! Kérjük:
+1. Fork-old a repo-t
+2. Hozz létre egy feature branch-et (`git checkout -b feature/AmazingFeature`)
+3. Commit-old a változtatásokat (`git commit -m 'Add some AmazingFeature'`)
+4. Push-old a branch-re (`git push origin feature/AmazingFeature`)
+5. Nyiss egy Pull Request-et
+
+## 📄 Licensz
+
+Ez a projekt szabadon használható és módosítható oktatási célokra.
+
+## 👨‍💻 Készítő
+
+Fejlesztve modern Node.js technológiákkal és haladó AI algoritmusokkal.
+
+---
+
+**Élvezd a játékot!** 🎮 Ha megtetszik, adj egy ⭐-ot!
