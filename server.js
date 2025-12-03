@@ -528,9 +528,9 @@ class GomokuAI {
     switch (difficulty) {
       case 'easy': return 1;      // 🤪 Bugyuta - 1 lépés előre
       case 'medium': return 2;    // 😊 Közepes - 2 lépés előre
-      case 'hard': return 4;      // 😎 Nehéz - 4 lépés előre
-      case 'very-hard': return 5; // 🔥 Nagyon nehéz - 5 lépés előre
-      case 'extreme': return 6;   // 💀 Extrém - 6 lépés előre (MEGA HARD!)
+      case 'hard': return 3;      // 😎 Nehéz - 3 lépés előre
+      case 'very-hard': return 4; // 🔥 Nagyon nehéz - 4 lépés előre
+      case 'extreme': return 5;   // 💀 Extrém - 5 lépés előre (MEGA HARD!)
       default: return 2;
     }
   }
@@ -608,8 +608,9 @@ class GomokuAI {
       return [[center, center]];
     }
 
-    // Get cells near occupied ones - use smaller radius for better performance
-    const radius = this.difficulty === 'hard' ? 1 : 2;  // Smaller search area for hard mode
+    // Get cells near occupied ones - OPTIMIZED for speed
+    // Use radius 1 for all difficulties to keep it fast
+    const radius = 1;  // Only check immediate neighbors
     const nearbyMoves = new Set();
     for (const [row, col] of occupied) {
       for (let dr = -radius; dr <= radius; dr++) {
@@ -629,14 +630,15 @@ class GomokuAI {
     });
 
     // Limit number of moves to consider (for performance)
-    // FIX #7: Use Fisher-Yates shuffle instead of Math.random() sort
-    if (moves.length > 25) {
+    // Reduce max moves for higher difficulties
+    const maxMoves = this.difficulty === 'extreme' || this.difficulty === 'very-hard' ? 15 : 20;
+    if (moves.length > maxMoves) {
       // Fisher-Yates shuffle
       for (let i = moves.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [moves[i], moves[j]] = [moves[j], moves[i]];
       }
-      return moves.slice(0, 25);
+      return moves.slice(0, maxMoves);
     }
 
     return moves.length > 0 ? moves : this.getAllEmptyCells(board, boardSize);
