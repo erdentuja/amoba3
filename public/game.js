@@ -3492,31 +3492,14 @@ let allUsers = [];
 function loadUsersTable() {
   if (!socket || !isAdmin) return;
 
-  // Request all online players which includes user data
-  const onlinePlayers = [];
+  // Show loading state
+  const tbody = document.getElementById('userTableBody');
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="7" class="loading-users">Felhasználók betöltése...</td></tr>';
+  }
 
-  // Get all users from the online players list
-  document.querySelectorAll('.online-player').forEach(el => {
-    const username = el.textContent.trim().split(' ')[0];
-    if (username) onlinePlayers.push(username);
-  });
-
-  // For now, render from UserManager (need to add socket endpoint)
-  // We'll populate with mock data for testing
-  const mockUsers = [
-    {
-      username: 'András',
-      email: 'andras@example.com',
-      rank: 'Főadmin',
-      score: 100,
-      isAdmin: true,
-      isBanned: false,
-      createdAt: new Date().toISOString(),
-      stats: { totalGames: 10, wins: 8, losses: 2, winRate: 80 }
-    }
-  ];
-
-  renderUsersTable(mockUsers);
+  console.log('📊 Loading all users...');
+  socket.emit('adminGetAllUsers');
 }
 
 // Render users table
@@ -3527,8 +3510,27 @@ function renderUsersTable(users) {
 
   tbody.innerHTML = '';
 
-  users.forEach(user => {
+  if (!users || users.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #999; padding: 40px;">Nincs felhasználó</td></tr>';
+    return;
+  }
+
+  // Sort users: Admins first, then by score
+  const sortedUsers = [...users].sort((a, b) => {
+    if (a.isAdmin && !b.isAdmin) return -1;
+    if (!a.isAdmin && b.isAdmin) return 1;
+    return (b.score || 0) - (a.score || 0);
+  });
+
+  sortedUsers.forEach(user => {
     const tr = document.createElement('tr');
+
+    // Add row classes for visual distinction
+    if (user.isBanned) {
+      tr.classList.add('user-banned');
+    } else if (user.isAdmin) {
+      tr.classList.add('user-admin');
+    }
 
     const isOnline = Array.from(document.querySelectorAll('.online-player')).some(el =>
       el.textContent.includes(user.username)
@@ -3537,27 +3539,27 @@ function renderUsersTable(users) {
     const username = user.username.replace(/'/g, "\\'");
 
     tr.innerHTML = `
-      <td><input type="checkbox" class="user-checkbox" data-username="${username}"></td>
+      <td><input type="checkbox" class="user-checkbox" data-username="${username}" ${user.isAdmin && user.username !== myPlayerName ? 'title="Admin felhasználó"' : ''}></td>
       <td><strong>${user.username}</strong></td>
       <td>${user.email || '-'}</td>
       <td>${user.rank || 'Újonc'}</td>
-      <td>${user.score || 0}</td>
+      <td><strong>${user.score || 0}</strong></td>
       <td>
         ${user.isBanned ? '<span class="user-status status-banned">🚫 Bannolva</span>' : ''}
         ${user.isAdmin ? '<span class="user-status status-admin">👑 Admin</span>' : ''}
         ${isOnline ? '<span class="user-status status-online">🟢 Online</span>' : '<span class="user-status status-offline">⚫ Offline</span>'}
       </td>
       <td class="user-actions">
-        <button class="btn btn-info btn-sm" onclick="viewUserDetails('${username}')">👁️ Részletek</button>
+        <button class="btn btn-info btn-sm" onclick="viewUserDetails('${username}')" title="Felhasználó részletek">👁️</button>
         ${!user.isBanned ?
-          `<button class="btn btn-warning btn-sm" onclick="openBanModal('${username}')">🚫 Ban</button>` :
-          `<button class="btn btn-success btn-sm" onclick="unbanUser('${username}')">✅ Unban</button>`
+          `<button class="btn btn-warning btn-sm" onclick="openBanModal('${username}')" title="Bannolás">🚫 Ban</button>` :
+          `<button class="btn btn-success btn-sm" onclick="unbanUser('${username}')" title="Ban feloldása">✅ Unban</button>`
         }
-        <button class="btn btn-primary btn-sm" onclick="openResetPasswordModal('${username}')">🔑 Jelszó</button>
-        <button class="btn btn-${user.isAdmin ? 'warning' : 'success'} btn-sm" onclick="toggleUserAdmin('${username}')">
-          ${user.isAdmin ? '👤 Admin elvétele' : '👑 Admin adása'}
+        <button class="btn btn-primary btn-sm" onclick="openResetPasswordModal('${username}')" title="Jelszó visszaállítása">🔑</button>
+        <button class="btn btn-${user.isAdmin ? 'warning' : 'success'} btn-sm" onclick="toggleUserAdmin('${username}')" title="${user.isAdmin ? 'Admin jogok elvétele' : 'Admin jogok adása'}">
+          ${user.isAdmin ? '👤' : '👑'}
         </button>
-        <button class="btn btn-danger btn-sm" onclick="deleteUser('${username}')">🗑️ Törlés</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteUser('${username}')" title="Felhasználó törlése">🗑️</button>
       </td>
     `;
 
@@ -3568,6 +3570,8 @@ function renderUsersTable(users) {
   document.querySelectorAll('.user-checkbox').forEach(checkbox => {
     checkbox.addEventListener('change', handleUserCheckbox);
   });
+
+  console.log(`✅ ${sortedUsers.length} felhasználó betöltve`);
 }
 
 // Handle individual checkbox

@@ -4081,3 +4081,113 @@ header h1 {
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
+
+/* Enhanced User Table Styling */
+.user-table-container {
+  margin-top: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.user-table {
+  min-width: 100%;
+  table-layout: auto;
+}
+
+.user-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.user-table th:first-child,
+.user-table td:first-child {
+  width: 40px;
+  text-align: center;
+}
+
+.user-table th:nth-child(2),
+.user-table td:nth-child(2) {
+  min-width: 150px;
+}
+
+.user-table th:nth-child(3),
+.user-table td:nth-child(3) {
+  min-width: 180px;
+}
+
+.user-table th:nth-child(4),
+.user-table td:nth-child(4) {
+  width: 100px;
+}
+
+.user-table th:nth-child(5),
+.user-table td:nth-child(5) {
+  width: 80px;
+  text-align: center;
+}
+
+.user-table th:nth-child(6),
+.user-table td:nth-child(6) {
+  min-width: 200px;
+}
+
+.user-table th:last-child,
+.user-table td:last-child {
+  min-width: 400px;
+}
+
+.user-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.user-table tbody tr.user-banned {
+  background-color: #ffe6e6;
+}
+
+.user-table tbody tr.user-admin {
+  background-color: #e6f3ff;
+}
+
+.user-status {
+  margin: 2px;
+  white-space: nowrap;
+}
+
+.user-actions {
+  justify-content: flex-start;
+}
+
+/* Better mobile responsiveness */
+@media (max-width: 1200px) {
+  .user-table {
+    font-size: 12px;
+  }
+  
+  .user-actions .btn {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+}
+
+/* Loading indicator */
+.loading-users {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-size: 16px;
+}
+
+.loading-users::before {
+  content: "⏳ ";
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { content: "⏳ "; }
+  25% { content: "⌛ "; }
+  50% { content: "⏳ "; }
+  75% { content: "⌛ "; }
+  100% { content: "⏳ "; }
+}
