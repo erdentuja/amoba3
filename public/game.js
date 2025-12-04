@@ -2100,6 +2100,9 @@ function updateAdminUserLists({ registered, guests }) {
 }
 
 function updateAdminRoomsList(rooms) {
+  // Rooms list removed from admin panel - no longer displayed
+  if (!roomsCountSpan || !adminRoomsListDiv) return;
+
   roomsCountSpan.textContent = rooms.length;
 
   if (rooms.length === 0) {
