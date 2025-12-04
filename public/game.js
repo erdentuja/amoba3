@@ -724,8 +724,8 @@ function setupEventListeners() {
     backToLobbyFromLeaderboard.addEventListener('click', hideLeaderboardView);
   }
 
-  // Leaderboard category buttons (updated for premium design)
-  document.querySelectorAll('.category-tab').forEach(btn => {
+  // Leaderboard category buttons
+  document.querySelectorAll('.lb-cat-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const category = btn.dataset.category;
       loadLeaderboard(category);
@@ -1107,9 +1107,6 @@ function showLeaderboardView() {
   lobby.style.display = 'none';
   leaderboardView.style.display = 'block';
 
-  // Initialize particle animation
-  initLeaderboardParticles();
-
   // Load default category (score)
   loadLeaderboard('score');
 }
@@ -1118,17 +1115,14 @@ function showLeaderboardView() {
 function hideLeaderboardView() {
   leaderboardView.style.display = 'none';
   lobby.style.display = 'flex';
-
-  // Stop particle animation
-  stopLeaderboardParticles();
 }
 
 // Load leaderboard by category
 function loadLeaderboard(category) {
   console.log('📊 Loading leaderboard:', category);
 
-  // Update active category button (new class name)
-  document.querySelectorAll('.category-tab').forEach(btn => {
+  // Update active category button
+  document.querySelectorAll('.lb-cat-btn').forEach(btn => {
     btn.classList.remove('active');
     if (btn.dataset.category === category) {
       btn.classList.add('active');
@@ -1149,9 +1143,9 @@ function loadLeaderboard(category) {
   document.getElementById('leaderboardCategoryTitle').textContent = `${categoryInfo.icon} ${categoryInfo.title}`;
   document.getElementById('leaderboardValueHeader').textContent = categoryInfo.col;
 
-  // Show loading with premium design
+  // Show loading
   const tbody = document.getElementById('leaderboardTableBody');
-  tbody.innerHTML = '<tr><td colspan="6" class="leaderboard-loading-premium"><div class="loading-spinner"></div><span>Betöltés...</span></td></tr>';
+  tbody.innerHTML = '<tr><td colspan="6" class="lb-loading"><div class="lb-spinner"></div><span>Betöltés...</span></td></tr>';
 
   // Request data from server
   socket.emit('getLeaderboard', { category, limit: 20 });
@@ -1162,16 +1156,12 @@ function renderLeaderboard(category, leaderboard) {
   const tbody = document.getElementById('leaderboardTableBody');
 
   if (!leaderboard || leaderboard.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="leaderboard-empty">📭 Nincs adat</td></tr>';
-    document.getElementById('leaderboardPodium').style.display = 'none';
+    tbody.innerHTML = '<tr><td colspan="6" class="lb-empty">📭 Nincs adat</td></tr>';
     return;
   }
 
   // Update stats cards
   updateLeaderboardStats(leaderboard);
-
-  // Update podium (top 3)
-  updateLeaderboardPodium(category, leaderboard);
 
   tbody.innerHTML = '';
 
@@ -1189,32 +1179,30 @@ function renderLeaderboard(category, leaderboard) {
     }
 
     // Get value based on category
-    let valueCell = '';
+    let value = '';
     switch (category) {
       case 'score':
-        valueCell = `<td class="value-col">${entry.score || 0}</td>`;
+        value = entry.score || 0;
         break;
       case 'winRate':
-        const winRate = entry.stats.totalGames > 0
-          ? ((entry.stats.wins / entry.stats.totalGames) * 100).toFixed(1)
-          : 0;
-        valueCell = `<td class="value-col">${winRate}%</td>`;
+        value = entry.stats.totalGames > 0
+          ? `${((entry.stats.wins / entry.stats.totalGames) * 100).toFixed(1)}%`
+          : '0%';
         break;
       case 'totalGames':
-        valueCell = `<td class="value-col">${entry.stats.totalGames || 0}</td>`;
+        value = entry.stats.totalGames || 0;
         break;
       case 'pvpWins':
-        valueCell = `<td class="value-col">${entry.stats.pvpWins || 0}</td>`;
+        value = entry.stats.pvpWins || 0;
         break;
       case 'aiMaster':
-        const aiWins = (entry.stats.aiEasyWins || 0) + (entry.stats.aiMediumWins || 0) + (entry.stats.aiHardWins || 0);
-        valueCell = `<td class="value-col">${aiWins}</td>`;
+        value = (entry.stats.aiEasyWins || 0) + (entry.stats.aiMediumWins || 0) + (entry.stats.aiHardWins || 0);
         break;
       case 'winStreak':
-        valueCell = `<td class="value-col">${entry.stats.longestWinStreak || 0}</td>`;
+        value = entry.stats.longestWinStreak || 0;
         break;
       default:
-        valueCell = `<td class="value-col">${entry.score || 0}</td>`;
+        value = entry.score || 0;
     }
 
     // Rank icon
@@ -1224,12 +1212,12 @@ function renderLeaderboard(category, leaderboard) {
     if (entry.rank === 3) rankIcon = '🥉';
 
     row.innerHTML = `
-      <td class="rank-col">${rankIcon}</td>
-      <td class="name-col">${entry.username}</td>
-      <td class="rank-badge-col">${entry.playerRank || 'Újonc'}</td>
-      ${valueCell}
-      <td class="games-col">${entry.stats.totalGames || 0}</td>
-      <td class="wins-col">${entry.stats.wins || 0}</td>
+      <td>${rankIcon}</td>
+      <td>${entry.username}</td>
+      <td>${entry.playerRank || 'Újonc'}</td>
+      <td>${value}</td>
+      <td>${entry.stats.totalGames || 0}</td>
+      <td>${entry.stats.wins || 0}</td>
     `;
 
     tbody.appendChild(row);
@@ -1249,133 +1237,6 @@ function updateLeaderboardStats(leaderboard) {
   document.getElementById('topPlayerName').textContent = leaderboard[0]?.username || '-';
 }
 
-// Update podium for top 3 players
-function updateLeaderboardPodium(category, leaderboard) {
-  const podium = document.getElementById('leaderboardPodium');
-
-  if (leaderboard.length < 3) {
-    podium.style.display = 'none';
-    return;
-  }
-
-  podium.style.display = 'block';
-
-  // Get value function based on category
-  const getValue = (entry) => {
-    switch (category) {
-      case 'score':
-        return entry.score || 0;
-      case 'winRate':
-        return entry.stats.totalGames > 0
-          ? `${((entry.stats.wins / entry.stats.totalGames) * 100).toFixed(1)}%`
-          : '0%';
-      case 'totalGames':
-        return entry.stats.totalGames || 0;
-      case 'pvpWins':
-        return entry.stats.pvpWins || 0;
-      case 'aiMaster':
-        return (entry.stats.aiEasyWins || 0) + (entry.stats.aiMediumWins || 0) + (entry.stats.aiHardWins || 0);
-      case 'winStreak':
-        return entry.stats.longestWinStreak || 0;
-      default:
-        return entry.score || 0;
-    }
-  };
-
-  // 1st place
-  if (leaderboard[0]) {
-    const player1 = leaderboard[0];
-    document.querySelector('#podium1stPlayer .podium-name').textContent = player1.username;
-    document.querySelector('#podium1stPlayer .podium-value').textContent = getValue(player1);
-  }
-
-  // 2nd place
-  if (leaderboard[1]) {
-    const player2 = leaderboard[1];
-    document.querySelector('#podium2ndPlayer .podium-name').textContent = player2.username;
-    document.querySelector('#podium2ndPlayer .podium-value').textContent = getValue(player2);
-  }
-
-  // 3rd place
-  if (leaderboard[2]) {
-    const player3 = leaderboard[2];
-    document.querySelector('#podium3rdPlayer .podium-name').textContent = player3.username;
-    document.querySelector('#podium3rdPlayer .podium-value').textContent = getValue(player3);
-  }
-}
-
-// Particle Animation System
-let leaderboardParticlesInterval = null;
-let particleCanvas = null;
-let particleCtx = null;
-let particles = [];
-
-function initLeaderboardParticles() {
-  particleCanvas = document.getElementById('leaderboardParticles');
-  if (!particleCanvas) return;
-
-  particleCtx = particleCanvas.getContext('2d');
-  particleCanvas.width = window.innerWidth;
-  particleCanvas.height = window.innerHeight;
-
-  // Create particles
-  particles = [];
-  for (let i = 0; i < 50; i++) {
-    particles.push({
-      x: Math.random() * particleCanvas.width,
-      y: Math.random() * particleCanvas.height,
-      radius: Math.random() * 3 + 1,
-      vx: Math.random() * 2 - 1,
-      vy: Math.random() * 2 - 1,
-      opacity: Math.random() * 0.5 + 0.2
-    });
-  }
-
-  // Start animation
-  animateParticles();
-
-  // Resize handler
-  window.addEventListener('resize', () => {
-    if (particleCanvas) {
-      particleCanvas.width = window.innerWidth;
-      particleCanvas.height = window.innerHeight;
-    }
-  });
-}
-
-function animateParticles() {
-  if (!particleCanvas || !particleCtx) return;
-
-  particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
-
-  particles.forEach(particle => {
-    // Draw particle
-    particleCtx.beginPath();
-    particleCtx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-    particleCtx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
-    particleCtx.fill();
-
-    // Update position
-    particle.x += particle.vx;
-    particle.y += particle.vy;
-
-    // Bounce off edges
-    if (particle.x < 0 || particle.x > particleCanvas.width) particle.vx *= -1;
-    if (particle.y < 0 || particle.y > particleCanvas.height) particle.vy *= -1;
-  });
-
-  leaderboardParticlesInterval = requestAnimationFrame(animateParticles);
-}
-
-function stopLeaderboardParticles() {
-  if (leaderboardParticlesInterval) {
-    cancelAnimationFrame(leaderboardParticlesInterval);
-    leaderboardParticlesInterval = null;
-  }
-  if (particleCtx && particleCanvas) {
-    particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
-  }
-}
 
 // Watch a game as spectator
 function watchGame(roomId) {
