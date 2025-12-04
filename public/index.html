@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Amőba Online</title>
   <link rel="stylesheet" href="themes.css">
-  <link rel="stylesheet" href="style.css?v=3.0">
+  <link rel="stylesheet" href="style.css?v=3.1">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
@@ -335,11 +335,12 @@
               onclick="window.open('rules.html', '_blank')">📖</button>
           </div>
 
-          <!-- Fő gombok (Profil, Admin, Stats, Kilépés) -->
+          <!-- Fő gombok (Profil, Admin, Stats, Leaderboard, Kilépés) -->
           <div class="main-buttons-group">
             <button id="viewProfileBtn" class="btn btn-profile">👤 Profilom</button>
             <button id="adminLoginBtn" class="btn btn-admin">🔑 Admin</button>
             <button id="viewStatsBtn" class="btn btn-stats">📊 Statisztikák</button>
+            <button id="viewLeaderboardBtn" class="btn btn-success">🏆 Ranglista</button>
             <button id="logoutBtn" class="btn btn-danger">🚪 Kilépés</button>
           </div>
         </div>
@@ -587,6 +588,46 @@
             <h4>🏆 Eredmények</h4>
             <canvas id="statsResultsChart"></canvas>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaderboard View -->
+    <div id="leaderboardView" class="leaderboard-view" style="display: none;">
+      <div class="leaderboard-header">
+        <h2>🏆 Ranglista</h2>
+        <button id="backToLobbyFromLeaderboard" class="btn btn-primary">⬅️ Vissza a lobbyba</button>
+      </div>
+      <div class="leaderboard-content">
+        <!-- Category selector -->
+        <div class="leaderboard-categories">
+          <button class="leaderboard-category-btn active" data-category="score">💰 Pontszám</button>
+          <button class="leaderboard-category-btn" data-category="winRate">📊 Győzelmi arány</button>
+          <button class="leaderboard-category-btn" data-category="totalGames">🎮 Legtöbb játék</button>
+          <button class="leaderboard-category-btn" data-category="pvpWins">⚔️ PvP bajnokok</button>
+          <button class="leaderboard-category-btn" data-category="aiMaster">🤖 AI mesterek</button>
+          <button class="leaderboard-category-btn" data-category="winStreak">🔥 Legjobb sorozat</button>
+        </div>
+
+        <!-- Leaderboard table -->
+        <div class="leaderboard-table-container">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Játékos</th>
+                <th>Rang</th>
+                <th id="leaderboardValueHeader">Pontszám</th>
+                <th>Játékok</th>
+                <th>Győzelmek</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardTableBody">
+              <tr>
+                <td colspan="6" class="leaderboard-loading">⏳ Betöltés...</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

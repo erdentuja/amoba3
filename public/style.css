@@ -4433,3 +4433,228 @@ header h1 {
     padding: 6px 8px;
   }
 }
+
+/* ===== LEADERBOARD VIEW ===== */
+
+.leaderboard-view {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.leaderboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.leaderboard-header h2 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.leaderboard-content {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.leaderboard-categories {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.leaderboard-category-btn {
+  background: #f3f4f6;
+  border: 2px solid transparent;
+  color: #6b7280;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.leaderboard-category-btn:hover {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.leaderboard-category-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.leaderboard-table-container {
+  overflow-x: auto;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.leaderboard-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.leaderboard-table th {
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.8px;
+}
+
+.leaderboard-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.leaderboard-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.leaderboard-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.leaderboard-table td {
+  padding: 14px 12px;
+}
+
+/* Rank column */
+.leaderboard-rank {
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  width: 60px;
+}
+
+/* Name column */
+.leaderboard-name {
+  font-weight: 700;
+  color: #1f2937;
+  font-size: 16px;
+}
+
+/* Player rank badge */
+.leaderboard-player-rank {
+  background: #667eea;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+/* Value column (main metric) */
+.leaderboard-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #f59e0b;
+}
+
+/* Top 3 highlighting */
+.leaderboard-table tbody tr.rank-1 {
+  background: linear-gradient(90deg, rgba(255,215,0,0.2) 0%, rgba(255,255,255,0) 100%);
+  border-left: 4px solid #FFD700;
+}
+
+.leaderboard-table tbody tr.rank-2 {
+  background: linear-gradient(90deg, rgba(192,192,192,0.2) 0%, rgba(255,255,255,0) 100%);
+  border-left: 4px solid #C0C0C0;
+}
+
+.leaderboard-table tbody tr.rank-3 {
+  background: linear-gradient(90deg, rgba(205,127,50,0.2) 0%, rgba(255,255,255,0) 100%);
+  border-left: 4px solid #CD7F32;
+}
+
+/* Current player highlighting */
+.leaderboard-table tbody tr.current-player {
+  background: linear-gradient(90deg, rgba(102,126,234,0.15) 0%, rgba(255,255,255,0) 100%);
+  border-left: 4px solid #667eea;
+  font-weight: 700;
+}
+
+.leaderboard-table tbody tr.current-player .leaderboard-name {
+  color: #667eea;
+}
+
+.leaderboard-table tbody tr.current-player .leaderboard-name::after {
+  content: " (Te)";
+  font-size: 12px;
+  color: #667eea;
+  font-weight: 600;
+}
+
+/* Loading and empty states */
+.leaderboard-loading,
+.leaderboard-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+  font-size: 18px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .leaderboard-view {
+    padding: 10px;
+  }
+
+  .leaderboard-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .leaderboard-header h2 {
+    font-size: 24px;
+  }
+
+  .leaderboard-content {
+    padding: 15px;
+  }
+
+  .leaderboard-categories {
+    gap: 6px;
+  }
+
+  .leaderboard-category-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .leaderboard-table {
+    font-size: 13px;
+  }
+
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: 10px 6px;
+  }
+
+  .leaderboard-name {
+    font-size: 14px;
+  }
+
+  .leaderboard-value {
+    font-size: 16px;
+  }
+}

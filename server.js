@@ -3409,6 +3409,82 @@ io.on('connection', (socket) => {
     socket.emit('playerProfile', profileData);
   });
 
+  // ============================================================================
+  // LEADERBOARD
+  // ============================================================================
+
+  socket.on('getLeaderboard', ({ category = 'score', limit = 10 }) => {
+    const allUsers = Object.keys(UserManager.users)
+      .map(username => {
+        const user = UserManager.users[username];
+        return {
+          username,
+          rank: user.rank,
+          score: user.score,
+          stats: user.stats || {},
+          createdAt: user.createdAt
+        };
+      })
+      .filter(user => user.stats && user.stats.totalGames > 0); // Only users who played at least 1 game
+
+    let sortedUsers = [];
+
+    switch (category) {
+      case 'score':
+        // Top players by score
+        sortedUsers = allUsers.sort((a, b) => (b.score || 0) - (a.score || 0));
+        break;
+
+      case 'winRate':
+        // Best win rate (minimum 5 games played)
+        sortedUsers = allUsers
+          .filter(u => u.stats.totalGames >= 5)
+          .sort((a, b) => {
+            const winRateA = a.stats.wins / a.stats.totalGames;
+            const winRateB = b.stats.wins / b.stats.totalGames;
+            return winRateB - winRateA;
+          });
+        break;
+
+      case 'totalGames':
+        // Most games played
+        sortedUsers = allUsers.sort((a, b) => (b.stats.totalGames || 0) - (a.stats.totalGames || 0));
+        break;
+
+      case 'pvpWins':
+        // PvP Champions
+        sortedUsers = allUsers.sort((a, b) => (b.stats.pvpWins || 0) - (a.stats.pvpWins || 0));
+        break;
+
+      case 'aiMaster':
+        // AI Masters (total AI wins)
+        sortedUsers = allUsers.sort((a, b) => {
+          const aiWinsA = (a.stats.aiEasyWins || 0) + (a.stats.aiMediumWins || 0) + (a.stats.aiHardWins || 0);
+          const aiWinsB = (b.stats.aiEasyWins || 0) + (b.stats.aiMediumWins || 0) + (b.stats.aiHardWins || 0);
+          return aiWinsB - aiWinsA;
+        });
+        break;
+
+      case 'winStreak':
+        // Longest win streak
+        sortedUsers = allUsers.sort((a, b) => (b.stats.longestWinStreak || 0) - (a.stats.longestWinStreak || 0));
+        break;
+
+      default:
+        sortedUsers = allUsers.sort((a, b) => (b.score || 0) - (a.score || 0));
+    }
+
+    const leaderboard = sortedUsers.slice(0, limit).map((user, index) => ({
+      rank: index + 1,
+      username: user.username,
+      playerRank: user.rank,
+      score: user.score,
+      stats: user.stats
+    }));
+
+    socket.emit('leaderboardData', { category, leaderboard });
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
 

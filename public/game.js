@@ -106,8 +106,11 @@ const lobbyChatMessages = document.getElementById('lobbyChatMessages');
 const lobbyChatInput = document.getElementById('lobbyChatInput');
 const lobbyChatSendBtn = document.getElementById('lobbyChatSendBtn');
 const viewStatsBtn = document.getElementById('viewStatsBtn');
+const viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
 const backToLobbyBtn = document.getElementById('backToLobbyBtn');
+const backToLobbyFromLeaderboard = document.getElementById('backToLobbyFromLeaderboard');
 const statsView = document.getElementById('statsView');
+const leaderboardView = document.getElementById('leaderboardView');
 const defeatModal = document.getElementById('defeatModal');
 const defeatNewGameBtn = document.getElementById('defeatNewGameBtn');
 const defeatLeaveBtn = document.getElementById('defeatLeaveBtn');
@@ -713,6 +716,22 @@ function setupEventListeners() {
   viewStatsBtn.addEventListener('click', showStatsView);
   backToLobbyBtn.addEventListener('click', hideStatsView);
 
+  // Leaderboard button
+  if (viewLeaderboardBtn) {
+    viewLeaderboardBtn.addEventListener('click', showLeaderboardView);
+  }
+  if (backToLobbyFromLeaderboard) {
+    backToLobbyFromLeaderboard.addEventListener('click', hideLeaderboardView);
+  }
+
+  // Leaderboard category buttons
+  document.querySelectorAll('.leaderboard-category-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const category = btn.dataset.category;
+      loadLeaderboard(category);
+    });
+  });
+
   // Profile button and back button
   const viewProfileBtn = document.getElementById('viewProfileBtn');
   const backToLobbyFromProfile = document.getElementById('backToLobbyFromProfile');
@@ -1081,6 +1100,124 @@ function showStatsView() {
 function hideStatsView() {
   statsView.style.display = 'none';
   lobby.style.display = 'flex';
+}
+
+// Show leaderboard view
+function showLeaderboardView() {
+  lobby.style.display = 'none';
+  leaderboardView.style.display = 'block';
+
+  // Load default category (score)
+  loadLeaderboard('score');
+}
+
+// Hide leaderboard view and return to lobby
+function hideLeaderboardView() {
+  leaderboardView.style.display = 'none';
+  lobby.style.display = 'flex';
+}
+
+// Load leaderboard by category
+function loadLeaderboard(category) {
+  console.log('📊 Loading leaderboard:', category);
+
+  // Update active category button
+  document.querySelectorAll('.leaderboard-category-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.category === category) {
+      btn.classList.add('active');
+    }
+  });
+
+  // Update table header based on category
+  const headerMap = {
+    score: 'Pontszám',
+    winRate: 'Győzelmi arány',
+    totalGames: 'Összes játék',
+    pvpWins: 'PvP győzelmek',
+    aiMaster: 'AI győzelmek',
+    winStreak: 'Leghosszabb sorozat'
+  };
+  document.getElementById('leaderboardValueHeader').textContent = headerMap[category] || 'Pontszám';
+
+  // Show loading
+  const tbody = document.getElementById('leaderboardTableBody');
+  tbody.innerHTML = '<tr><td colspan="6" class="leaderboard-loading">⏳ Betöltés...</td></tr>';
+
+  // Request data from server
+  socket.emit('getLeaderboard', { category, limit: 20 });
+}
+
+// Render leaderboard data
+function renderLeaderboard(category, leaderboard) {
+  const tbody = document.getElementById('leaderboardTableBody');
+
+  if (!leaderboard || leaderboard.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="leaderboard-empty">📭 Nincs adat</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+
+  leaderboard.forEach((entry, index) => {
+    const row = document.createElement('tr');
+
+    // Highlight top 3
+    if (entry.rank === 1) row.classList.add('rank-1');
+    if (entry.rank === 2) row.classList.add('rank-2');
+    if (entry.rank === 3) row.classList.add('rank-3');
+
+    // Highlight current player
+    if (entry.username === myPlayerName) {
+      row.classList.add('current-player');
+    }
+
+    // Get value based on category
+    let valueCell = '';
+    switch (category) {
+      case 'score':
+        valueCell = `<td class="leaderboard-value">${entry.score || 0}</td>`;
+        break;
+      case 'winRate':
+        const winRate = entry.stats.totalGames > 0
+          ? ((entry.stats.wins / entry.stats.totalGames) * 100).toFixed(1)
+          : 0;
+        valueCell = `<td class="leaderboard-value">${winRate}%</td>`;
+        break;
+      case 'totalGames':
+        valueCell = `<td class="leaderboard-value">${entry.stats.totalGames || 0}</td>`;
+        break;
+      case 'pvpWins':
+        valueCell = `<td class="leaderboard-value">${entry.stats.pvpWins || 0}</td>`;
+        break;
+      case 'aiMaster':
+        const aiWins = (entry.stats.aiEasyWins || 0) + (entry.stats.aiMediumWins || 0) + (entry.stats.aiHardWins || 0);
+        valueCell = `<td class="leaderboard-value">${aiWins}</td>`;
+        break;
+      case 'winStreak':
+        valueCell = `<td class="leaderboard-value">${entry.stats.longestWinStreak || 0}</td>`;
+        break;
+      default:
+        valueCell = `<td class="leaderboard-value">${entry.score || 0}</td>`;
+    }
+
+    // Rank icon
+    let rankIcon = entry.rank;
+    if (entry.rank === 1) rankIcon = '🥇';
+    if (entry.rank === 2) rankIcon = '🥈';
+    if (entry.rank === 3) rankIcon = '🥉';
+
+    row.innerHTML = `
+      <td class="leaderboard-rank">${rankIcon}</td>
+      <td class="leaderboard-name">${entry.username}</td>
+      <td class="leaderboard-player-rank">${entry.playerRank || 'Újonc'}</td>
+      ${valueCell}
+      <td>${entry.stats.totalGames || 0}</td>
+      <td>${entry.stats.wins || 0}</td>
+    `;
+
+    tbody.appendChild(row);
+  });
 }
 
 // Watch a game as spectator
@@ -2043,6 +2180,12 @@ function setupAdminListeners() {
   socket.on('gameStats', (stats) => {
     updateGameStats(stats);
     updateStatsView(stats);
+  });
+
+  // Handle leaderboard data
+  socket.on('leaderboardData', ({ category, leaderboard }) => {
+    console.log('📊 Received leaderboard data:', category, leaderboard);
+    renderLeaderboard(category, leaderboard);
   });
 }
 
