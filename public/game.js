@@ -1192,29 +1192,29 @@ function renderLeaderboard(category, leaderboard) {
     let valueCell = '';
     switch (category) {
       case 'score':
-        valueCell = `<td class="leaderboard-value">${entry.score || 0}</td>`;
+        valueCell = `<td class="value-col">${entry.score || 0}</td>`;
         break;
       case 'winRate':
         const winRate = entry.stats.totalGames > 0
           ? ((entry.stats.wins / entry.stats.totalGames) * 100).toFixed(1)
           : 0;
-        valueCell = `<td class="leaderboard-value">${winRate}%</td>`;
+        valueCell = `<td class="value-col">${winRate}%</td>`;
         break;
       case 'totalGames':
-        valueCell = `<td class="leaderboard-value">${entry.stats.totalGames || 0}</td>`;
+        valueCell = `<td class="value-col">${entry.stats.totalGames || 0}</td>`;
         break;
       case 'pvpWins':
-        valueCell = `<td class="leaderboard-value">${entry.stats.pvpWins || 0}</td>`;
+        valueCell = `<td class="value-col">${entry.stats.pvpWins || 0}</td>`;
         break;
       case 'aiMaster':
         const aiWins = (entry.stats.aiEasyWins || 0) + (entry.stats.aiMediumWins || 0) + (entry.stats.aiHardWins || 0);
-        valueCell = `<td class="leaderboard-value">${aiWins}</td>`;
+        valueCell = `<td class="value-col">${aiWins}</td>`;
         break;
       case 'winStreak':
-        valueCell = `<td class="leaderboard-value">${entry.stats.longestWinStreak || 0}</td>`;
+        valueCell = `<td class="value-col">${entry.stats.longestWinStreak || 0}</td>`;
         break;
       default:
-        valueCell = `<td class="leaderboard-value">${entry.score || 0}</td>`;
+        valueCell = `<td class="value-col">${entry.score || 0}</td>`;
     }
 
     // Rank icon
@@ -1224,12 +1224,12 @@ function renderLeaderboard(category, leaderboard) {
     if (entry.rank === 3) rankIcon = '🥉';
 
     row.innerHTML = `
-      <td class="leaderboard-rank">${rankIcon}</td>
-      <td class="leaderboard-name">${entry.username}</td>
-      <td class="leaderboard-player-rank">${entry.playerRank || 'Újonc'}</td>
+      <td class="rank-col">${rankIcon}</td>
+      <td class="name-col">${entry.username}</td>
+      <td class="rank-badge-col">${entry.playerRank || 'Újonc'}</td>
       ${valueCell}
-      <td>${entry.stats.totalGames || 0}</td>
-      <td>${entry.stats.wins || 0}</td>
+      <td class="games-col">${entry.stats.totalGames || 0}</td>
+      <td class="wins-col">${entry.stats.wins || 0}</td>
     `;
 
     tbody.appendChild(row);
