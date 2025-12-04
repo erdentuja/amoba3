@@ -4271,23 +4271,27 @@ header h1 {
 .user-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 20px;
+  gap: 30px;
   margin-top: 20px;
+  padding: 10px;
 }
 
 .user-card {
   background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
   transition: all 0.3s ease;
-  border: 2px solid transparent;
+  border: 3px solid #e5e7eb;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .user-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  transform: translateY(-4px);
+  border-color: #667eea;
 }
 
 .user-card.user-admin {
@@ -4295,76 +4299,92 @@ header h1 {
   background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
 }
 
+.user-card.user-admin:hover {
+  border-color: #2563eb;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+}
+
 .user-card.user-banned {
   border-color: #ef4444;
   background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
 }
 
+.user-card.user-banned:hover {
+  border-color: #dc2626;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+}
+
 .user-card-checkbox {
   position: absolute;
-  top: 15px;
-  left: 15px;
-  width: 20px;
-  height: 20px;
+  top: 18px;
+  left: 18px;
+  width: 22px;
+  height: 22px;
   cursor: pointer;
+  accent-color: #667eea;
 }
 
 .user-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 15px;
-  padding-left: 35px;
+  margin-bottom: 20px;
+  padding-left: 40px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f3f4f6;
 }
 
 .user-card-name {
-  font-size: 20px;
-  font-weight: bold;
+  font-size: 22px;
+  font-weight: 700;
   color: #1f2937;
   margin: 0;
+  letter-spacing: -0.5px;
 }
 
 .user-card-badges {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .user-card-body {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 15px;
-  padding-left: 35px;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding-left: 40px;
+  flex-grow: 1;
 }
 
 .user-card-field {
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
 
 .user-card-label {
-  font-size: 11px;
+  font-size: 12px;
   color: #6b7280;
   text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
 }
 
 .user-card-value {
-  font-size: 15px;
+  font-size: 16px;
   color: #1f2937;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .user-card-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
-  padding-left: 35px;
-  padding-top: 15px;
-  border-top: 1px solid #e5e7eb;
+  padding-left: 40px;
+  padding-top: 20px;
+  border-top: 2px solid #f3f4f6;
+  margin-top: auto;
 }
 
 .user-card-actions .btn {
@@ -4374,6 +4394,7 @@ header h1 {
   display: flex;
   align-items: center;
   gap: 4px;
+  font-weight: 600;
 }
 
 /* Loading state for cards */
