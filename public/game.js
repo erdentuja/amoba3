@@ -724,8 +724,8 @@ function setupEventListeners() {
     backToLobbyFromLeaderboard.addEventListener('click', hideLeaderboardView);
   }
 
-  // Leaderboard category buttons
-  document.querySelectorAll('.leaderboard-category-btn').forEach(btn => {
+  // Leaderboard category buttons (updated for premium design)
+  document.querySelectorAll('.category-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       const category = btn.dataset.category;
       loadLeaderboard(category);
@@ -1107,6 +1107,9 @@ function showLeaderboardView() {
   lobby.style.display = 'none';
   leaderboardView.style.display = 'block';
 
+  // Initialize particle animation
+  initLeaderboardParticles();
+
   // Load default category (score)
   loadLeaderboard('score');
 }
@@ -1115,34 +1118,40 @@ function showLeaderboardView() {
 function hideLeaderboardView() {
   leaderboardView.style.display = 'none';
   lobby.style.display = 'flex';
+
+  // Stop particle animation
+  stopLeaderboardParticles();
 }
 
 // Load leaderboard by category
 function loadLeaderboard(category) {
   console.log('📊 Loading leaderboard:', category);
 
-  // Update active category button
-  document.querySelectorAll('.leaderboard-category-btn').forEach(btn => {
+  // Update active category button (new class name)
+  document.querySelectorAll('.category-tab').forEach(btn => {
     btn.classList.remove('active');
     if (btn.dataset.category === category) {
       btn.classList.add('active');
     }
   });
 
-  // Update table header based on category
+  // Update table header and category title
   const headerMap = {
-    score: 'Pontszám',
-    winRate: 'Győzelmi arány',
-    totalGames: 'Összes játék',
-    pvpWins: 'PvP győzelmek',
-    aiMaster: 'AI győzelmek',
-    winStreak: 'Leghosszabb sorozat'
+    score: { icon: '💰', title: 'Top Pontszám', col: 'Pontszám' },
+    winRate: { icon: '📊', title: 'Top Győzelmi arány', col: 'Győzelmi arány' },
+    totalGames: { icon: '🎮', title: 'Legtöbb játék', col: 'Összes játék' },
+    pvpWins: { icon: '⚔️', title: 'PvP Bajnokok', col: 'PvP győzelmek' },
+    aiMaster: { icon: '🤖', title: 'AI Mesterek', col: 'AI győzelmek' },
+    winStreak: { icon: '🔥', title: 'Legjobb Sorozat', col: 'Leghosszabb sorozat' }
   };
-  document.getElementById('leaderboardValueHeader').textContent = headerMap[category] || 'Pontszám';
 
-  // Show loading
+  const categoryInfo = headerMap[category] || headerMap.score;
+  document.getElementById('leaderboardCategoryTitle').textContent = `${categoryInfo.icon} ${categoryInfo.title}`;
+  document.getElementById('leaderboardValueHeader').textContent = categoryInfo.col;
+
+  // Show loading with premium design
   const tbody = document.getElementById('leaderboardTableBody');
-  tbody.innerHTML = '<tr><td colspan="6" class="leaderboard-loading">⏳ Betöltés...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="6" class="leaderboard-loading-premium"><div class="loading-spinner"></div><span>Betöltés...</span></td></tr>';
 
   // Request data from server
   socket.emit('getLeaderboard', { category, limit: 20 });
@@ -1154,8 +1163,15 @@ function renderLeaderboard(category, leaderboard) {
 
   if (!leaderboard || leaderboard.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" class="leaderboard-empty">📭 Nincs adat</td></tr>';
+    document.getElementById('leaderboardPodium').style.display = 'none';
     return;
   }
+
+  // Update stats cards
+  updateLeaderboardStats(leaderboard);
+
+  // Update podium (top 3)
+  updateLeaderboardPodium(category, leaderboard);
 
   tbody.innerHTML = '';
 
@@ -1218,6 +1234,147 @@ function renderLeaderboard(category, leaderboard) {
 
     tbody.appendChild(row);
   });
+}
+
+// Update leaderboard stats cards
+function updateLeaderboardStats(leaderboard) {
+  const totalPlayers = leaderboard.length;
+  let totalGames = 0;
+  leaderboard.forEach(player => {
+    totalGames += (player.stats.totalGames || 0);
+  });
+
+  document.getElementById('totalPlayersCount').textContent = totalPlayers;
+  document.getElementById('totalGamesCount').textContent = totalGames;
+  document.getElementById('topPlayerName').textContent = leaderboard[0]?.username || '-';
+}
+
+// Update podium for top 3 players
+function updateLeaderboardPodium(category, leaderboard) {
+  const podium = document.getElementById('leaderboardPodium');
+
+  if (leaderboard.length < 3) {
+    podium.style.display = 'none';
+    return;
+  }
+
+  podium.style.display = 'block';
+
+  // Get value function based on category
+  const getValue = (entry) => {
+    switch (category) {
+      case 'score':
+        return entry.score || 0;
+      case 'winRate':
+        return entry.stats.totalGames > 0
+          ? `${((entry.stats.wins / entry.stats.totalGames) * 100).toFixed(1)}%`
+          : '0%';
+      case 'totalGames':
+        return entry.stats.totalGames || 0;
+      case 'pvpWins':
+        return entry.stats.pvpWins || 0;
+      case 'aiMaster':
+        return (entry.stats.aiEasyWins || 0) + (entry.stats.aiMediumWins || 0) + (entry.stats.aiHardWins || 0);
+      case 'winStreak':
+        return entry.stats.longestWinStreak || 0;
+      default:
+        return entry.score || 0;
+    }
+  };
+
+  // 1st place
+  if (leaderboard[0]) {
+    const player1 = leaderboard[0];
+    document.querySelector('#podium1stPlayer .podium-name').textContent = player1.username;
+    document.querySelector('#podium1stPlayer .podium-value').textContent = getValue(player1);
+  }
+
+  // 2nd place
+  if (leaderboard[1]) {
+    const player2 = leaderboard[1];
+    document.querySelector('#podium2ndPlayer .podium-name').textContent = player2.username;
+    document.querySelector('#podium2ndPlayer .podium-value').textContent = getValue(player2);
+  }
+
+  // 3rd place
+  if (leaderboard[2]) {
+    const player3 = leaderboard[2];
+    document.querySelector('#podium3rdPlayer .podium-name').textContent = player3.username;
+    document.querySelector('#podium3rdPlayer .podium-value').textContent = getValue(player3);
+  }
+}
+
+// Particle Animation System
+let leaderboardParticlesInterval = null;
+let particleCanvas = null;
+let particleCtx = null;
+let particles = [];
+
+function initLeaderboardParticles() {
+  particleCanvas = document.getElementById('leaderboardParticles');
+  if (!particleCanvas) return;
+
+  particleCtx = particleCanvas.getContext('2d');
+  particleCanvas.width = window.innerWidth;
+  particleCanvas.height = window.innerHeight;
+
+  // Create particles
+  particles = [];
+  for (let i = 0; i < 50; i++) {
+    particles.push({
+      x: Math.random() * particleCanvas.width,
+      y: Math.random() * particleCanvas.height,
+      radius: Math.random() * 3 + 1,
+      vx: Math.random() * 2 - 1,
+      vy: Math.random() * 2 - 1,
+      opacity: Math.random() * 0.5 + 0.2
+    });
+  }
+
+  // Start animation
+  animateParticles();
+
+  // Resize handler
+  window.addEventListener('resize', () => {
+    if (particleCanvas) {
+      particleCanvas.width = window.innerWidth;
+      particleCanvas.height = window.innerHeight;
+    }
+  });
+}
+
+function animateParticles() {
+  if (!particleCanvas || !particleCtx) return;
+
+  particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+
+  particles.forEach(particle => {
+    // Draw particle
+    particleCtx.beginPath();
+    particleCtx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+    particleCtx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+    particleCtx.fill();
+
+    // Update position
+    particle.x += particle.vx;
+    particle.y += particle.vy;
+
+    // Bounce off edges
+    if (particle.x < 0 || particle.x > particleCanvas.width) particle.vx *= -1;
+    if (particle.y < 0 || particle.y > particleCanvas.height) particle.vy *= -1;
+  });
+
+  leaderboardParticlesInterval = requestAnimationFrame(animateParticles);
+}
+
+function stopLeaderboardParticles() {
+  if (leaderboardParticlesInterval) {
+    cancelAnimationFrame(leaderboardParticlesInterval);
+    leaderboardParticlesInterval = null;
+  }
+  if (particleCtx && particleCanvas) {
+    particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+  }
 }
 
 // Watch a game as spectator

@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Amőba Online</title>
   <link rel="stylesheet" href="themes.css">
-  <link rel="stylesheet" href="style.css?v=3.1">
+  <link rel="stylesheet" href="style.css?v=3.2">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
@@ -592,39 +592,133 @@
       </div>
     </div>
 
-    <!-- Leaderboard View -->
+    <!-- Leaderboard View - ULTRA PREMIUM -->
     <div id="leaderboardView" class="leaderboard-view" style="display: none;">
-      <div class="leaderboard-header">
-        <h2>🏆 Ranglista</h2>
-        <button id="backToLobbyFromLeaderboard" class="btn btn-primary">⬅️ Vissza a lobbyba</button>
-      </div>
-      <div class="leaderboard-content">
-        <!-- Category selector -->
-        <div class="leaderboard-categories">
-          <button class="leaderboard-category-btn active" data-category="score">💰 Pontszám</button>
-          <button class="leaderboard-category-btn" data-category="winRate">📊 Győzelmi arány</button>
-          <button class="leaderboard-category-btn" data-category="totalGames">🎮 Legtöbb játék</button>
-          <button class="leaderboard-category-btn" data-category="pvpWins">⚔️ PvP bajnokok</button>
-          <button class="leaderboard-category-btn" data-category="aiMaster">🤖 AI mesterek</button>
-          <button class="leaderboard-category-btn" data-category="winStreak">🔥 Legjobb sorozat</button>
-        </div>
+      <!-- Particle Background Canvas -->
+      <canvas id="leaderboardParticles" class="leaderboard-particles"></canvas>
 
-        <!-- Leaderboard table -->
-        <div class="leaderboard-table-container">
-          <table class="leaderboard-table">
+      <!-- Back Button (Fixed Top) -->
+      <button id="backToLobbyFromLeaderboard" class="leaderboard-back-btn">
+        <span>⬅️</span> Vissza a lobbyba
+      </button>
+
+      <!-- Hero Section with Animated Trophy -->
+      <div class="leaderboard-hero">
+        <div class="trophy-animation">
+          <div class="trophy-glow"></div>
+          <div class="trophy-icon">🏆</div>
+        </div>
+        <h1 class="leaderboard-title">Ranglista</h1>
+        <p class="leaderboard-subtitle">Légy a legjobb játékos!</p>
+      </div>
+
+      <!-- Stats Overview Cards -->
+      <div class="leaderboard-stats">
+        <div class="stat-card-premium">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="totalPlayersCount">-</div>
+          <div class="stat-label">Játékosok</div>
+        </div>
+        <div class="stat-card-premium">
+          <div class="stat-icon">🎮</div>
+          <div class="stat-value" id="totalGamesCount">-</div>
+          <div class="stat-label">Összes Játék</div>
+        </div>
+        <div class="stat-card-premium">
+          <div class="stat-icon">👑</div>
+          <div class="stat-value" id="topPlayerName">-</div>
+          <div class="stat-label">Top Játékos</div>
+        </div>
+      </div>
+
+      <!-- Category Tabs (Modern) -->
+      <div class="leaderboard-categories-modern">
+        <button class="category-tab active" data-category="score">
+          <span class="tab-icon">💰</span>
+          <span class="tab-text">Pontszám</span>
+        </button>
+        <button class="category-tab" data-category="winRate">
+          <span class="tab-icon">📊</span>
+          <span class="tab-text">Győzelmi arány</span>
+        </button>
+        <button class="category-tab" data-category="totalGames">
+          <span class="tab-icon">🎮</span>
+          <span class="tab-text">Legtöbb játék</span>
+        </button>
+        <button class="category-tab" data-category="pvpWins">
+          <span class="tab-icon">⚔️</span>
+          <span class="tab-text">PvP bajnokok</span>
+        </button>
+        <button class="category-tab" data-category="aiMaster">
+          <span class="tab-icon">🤖</span>
+          <span class="tab-text">AI mesterek</span>
+        </button>
+        <button class="category-tab" data-category="winStreak">
+          <span class="tab-icon">🔥</span>
+          <span class="tab-text">Legjobb sorozat</span>
+        </button>
+      </div>
+
+      <!-- 3D Podium for Top 3 -->
+      <div id="leaderboardPodium" class="leaderboard-podium" style="display: none;">
+        <div class="podium-container">
+          <!-- 2nd Place -->
+          <div class="podium-place podium-second">
+            <div class="podium-player" id="podium2ndPlayer">
+              <div class="podium-medal">🥈</div>
+              <div class="podium-avatar">2</div>
+              <div class="podium-name">-</div>
+              <div class="podium-value">-</div>
+            </div>
+            <div class="podium-stand podium-stand-2">2</div>
+          </div>
+          <!-- 1st Place -->
+          <div class="podium-place podium-first">
+            <div class="podium-player" id="podium1stPlayer">
+              <div class="podium-medal">🥇</div>
+              <div class="podium-avatar podium-avatar-crown">1</div>
+              <div class="podium-crown">👑</div>
+              <div class="podium-name">-</div>
+              <div class="podium-value">-</div>
+            </div>
+            <div class="podium-stand podium-stand-1">1</div>
+          </div>
+          <!-- 3rd Place -->
+          <div class="podium-place podium-third">
+            <div class="podium-player" id="podium3rdPlayer">
+              <div class="podium-medal">🥉</div>
+              <div class="podium-avatar">3</div>
+              <div class="podium-name">-</div>
+              <div class="podium-value">-</div>
+            </div>
+            <div class="podium-stand podium-stand-3">3</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Glass Morphism Leaderboard Table -->
+      <div class="leaderboard-glass-container">
+        <div class="leaderboard-table-header">
+          <h3 id="leaderboardCategoryTitle">💰 Top Pontszám</h3>
+        </div>
+        <div class="leaderboard-table-wrapper">
+          <table class="leaderboard-table-premium">
             <thead>
               <tr>
-                <th>#</th>
-                <th>Játékos</th>
-                <th>Rang</th>
-                <th id="leaderboardValueHeader">Pontszám</th>
-                <th>Játékok</th>
-                <th>Győzelmek</th>
+                <th class="rank-col">#</th>
+                <th class="name-col">Játékos</th>
+                <th class="rank-badge-col">Rang</th>
+                <th class="value-col" id="leaderboardValueHeader">Pontszám</th>
+                <th class="games-col">Játékok</th>
+                <th class="wins-col">Győzelmek</th>
               </tr>
             </thead>
             <tbody id="leaderboardTableBody">
               <tr>
-                <td colspan="6" class="leaderboard-loading">⏳ Betöltés...</td>
+                <td colspan="6" class="leaderboard-loading-premium">
+                  <div class="loading-spinner"></div>
+                  <span>Betöltés...</span>
+                </td>
               </tr>
             </tbody>
           </table>
