@@ -68,9 +68,6 @@ function applyResponsiveCanvas() {
 console.log('%c 🚀 VERSION 2.0 LOADED - MOBILE OPTIMIZED 🚀 ', 'background: #222; color: #bada55; font-size: 20px;');
 
 // DOM elements
-const loginScreen = document.getElementById('loginScreen');
-const loginPlayerNameInput = document.getElementById('loginPlayerName');
-const loginBtn = document.getElementById('loginBtn');
 const lobby = document.getElementById('lobby');
 const gameArea = document.getElementById('gameArea');
 const boardSizeInput = document.getElementById('boardSize');
@@ -319,10 +316,8 @@ function init() {
       }
     }, 100);
   } else {
-    // No saved name, show login screen
-    const loadingScreen = document.getElementById('loadingScreen');
-    if (loadingScreen) loadingScreen.style.display = 'none';
-    loginScreen.style.display = 'flex';
+    // No saved name, redirect to landing page
+    window.location.href = '/landing.html';
   }
 }
 
@@ -401,16 +396,10 @@ function initSocketConnection() {
       const loadingScreen = document.getElementById('loadingScreen');
       if (loadingScreen) loadingScreen.style.display = 'none';
 
-      loginScreen.style.display = 'none';
       lobby.style.display = 'flex';
 
-      // Save login credentials to localStorage for auto-login on page refresh
-      // Save for ALL users (including admins) - only logout button will clear this
-      const savedPassword = document.getElementById('loginPassword').value;
+      // Save login status to localStorage for auto-login on page refresh
       localStorage.setItem('playerName', playerName);
-      if (savedPassword) {
-        localStorage.setItem('playerPassword', savedPassword);
-      }
       localStorage.setItem('isAdmin', isAdmin ? 'true' : 'false');
 
       // Update welcome section
@@ -448,19 +437,13 @@ function initSocketConnection() {
 
     // Handle login failed
     socket.on('loginFailed', ({ error }) => {
-      // Clear saved player name so auto-login doesn't retry
+      // Clear saved credentials and redirect to landing
       localStorage.removeItem('playerName');
-      localStorage.removeItem('playerPassword'); // Also clear any saved password
+      localStorage.removeItem('playerPassword');
+      localStorage.removeItem('isAdmin');
 
-      // Hide loading screen
-      const loadingScreen = document.getElementById('loadingScreen');
-      if (loadingScreen) loadingScreen.style.display = 'none';
-
-      // Show login screen so user can try again
-      loginScreen.style.display = 'flex';
-
-      // Show error message
-      showModalMessage(error, 'error');
+      alert(error);
+      window.location.href = '/landing.html';
     });
     // Handle room created
     socket.on('roomCreated', ({ roomId, boardSize }) => {
@@ -713,12 +696,6 @@ function initSocketConnection() {
 }
 
 function setupEventListeners() {
-  // Login
-  loginBtn.addEventListener('click', handleLogin);
-  loginPlayerNameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleLogin();
-  });
-
   // Room creation
   createRoomBtn.addEventListener('click', handleCreateRoom);
 
@@ -940,32 +917,6 @@ function handleGameOver(winner) {
 // ============================================================================
 
 /**
- * Bejelentkezést kezel - elküldi a játékos nevét a szervernek
- * @returns {void}
- * @emits login - Socket.IO event {playerName}
- */
-function handleLogin() {
-  console.log('🖱️ Login button clicked');
-  const playerName = loginPlayerNameInput.value.trim();
-  const password = document.getElementById('loginPassword').value;
-  console.log('📝 Player name:', playerName);
-
-  if (!playerName) {
-    console.warn('⚠️ No player name entered');
-    showModalMessage('Kérlek add meg a neved!', 'warning');
-    return;
-  }
-
-  if (socket) {
-    console.log('🔌 Emitting login event...');
-    socket.emit('login', { playerName, password });
-  } else {
-    console.error('❌ Socket is not initialized!');
-    showModalMessage('Hiba: Nincs kapcsolat a szerverrel!', 'error');
-  }
-}
-
-/**
  * Új szoba létrehozása a megadott paraméterekkel
  * @returns {void}
  * @emits createRoom - Socket.IO event {boardSize, gameMode}
@@ -1103,15 +1054,8 @@ function handleLogout() {
     localStorage.removeItem('playerName');
     localStorage.removeItem('playerPassword');
     localStorage.removeItem('isAdmin');
-
-    // Reset state
-    isLoggedIn = false;
-    myPlayerName = null;
-    myPlayerId = null;
-    gameState = null;
-    currentRoomId = null;
-    isSpectator = false;
-    isAdmin = false;
+    localStorage.removeItem('currentRoomId');
+    localStorage.removeItem('isSpectator');
 
     // Disconnect socket
     if (socket) {
@@ -1119,17 +1063,8 @@ function handleLogout() {
       socket = null;
     }
 
-    // Show login screen
-    loginScreen.style.display = 'flex';
-    lobby.style.display = 'none';
-    gameArea.style.display = 'none';
-    adminPanel.style.display = 'none';
-
-    // Clear input
-    loginPlayerNameInput.value = '';
-
-    // Reconnect socket for next login
-    initSocketConnection();
+    // Redirect to landing page
+    window.location.href = '/landing.html';
   }
 }
 
